@@ -1,3 +1,7 @@
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -190,6 +194,16 @@ public class Restaurant implements Serializable{
     public void removeAllTables(){
         tables.clear();
         Restaurant.Table.clearExtent();
+    }
+
+    public static void writeExtent(ObjectOutputStream stream) throws IOException{
+        stream.writeObject(extent);
+    }
+    public static void readExtent(ObjectInputStream stream) throws IOException, ClassNotFoundException{
+        Object object = stream.readObject();
+        if (object instanceof List<?>) {
+            extent = new ArrayList<>((List<Restaurant>) object);
+        }else throw new IOException("Unable to read from extent");
     }
 
     public abstract class Table implements Serializable{
