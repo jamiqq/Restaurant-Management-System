@@ -330,6 +330,17 @@ public class Restaurant implements Serializable{
             return "Table [tableNumber=" + tableNumber + ", tableType=" + tableType + ", reservations=" + reservations
                     + "]";
         }
+
+        public static void writeExtent(ObjectOutputStream stream) throws IOException{
+            stream.writeObject(extent);
+        }
+
+        public static void readExtent(ObjectInputStream stream) throws IOException, ClassNotFoundException{
+            Object object = stream.readObject();
+            if (object instanceof List<?>) {
+                extent = new ArrayList<>((List<Table>) object);
+            }else throw new IOException("Unable to read from extent");
+        }
     }
 
     public class BarTable extends Table{
