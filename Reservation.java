@@ -108,6 +108,9 @@ public class Reservation implements Serializable{
         if(emp == null){
             throw new IllegalArgumentException("Assigned employee can't be null");
         }
+        if (emp.role != Employee.Role.Waiter && emp.role != Employee.Role.Intern) {
+            throw new IllegalArgumentException("Assigned employee must be a Waiter or an Intern.");
+        }
         assignedEmployee = emp;
         emp.addReservation(this);
     }
@@ -118,6 +121,10 @@ public class Reservation implements Serializable{
         }
         assignedTable = table;
         table.addReservation(this);
+    }
+
+    public String getShortInfo(){
+        return getGuestName() + ", at " + getDateTimeOfReservation() + " at Table number: " + getAssignedTable().getTableNumber() + ". Employee -> " + getAssignedEmployee().getName() + " " + getAssignedEmployee().getSurname();
     }
 
     public static void showExtent(){

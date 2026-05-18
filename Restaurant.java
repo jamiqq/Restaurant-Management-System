@@ -1,6 +1,5 @@
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -48,7 +47,7 @@ public class Restaurant implements Serializable{
         }
     }
 
-    public Employee findByEmployee(String pesel){
+    public Employee findEmployeeByPeselNumber(String pesel){
         if(!empQualifier.containsKey(pesel)){
             throw new IllegalArgumentException("Unable to find an Employee...");
         }
@@ -275,7 +274,7 @@ public class Restaurant implements Serializable{
         }
         
         public void addReservation(Reservation newReservation){
-            if(!reservations.contains(newReservation)){
+            if(!reservations.contains(newReservation) && newReservation.getAssignedTable() == this){
                 reservations.add(newReservation);
         
                 newReservation.assignTable(this);
