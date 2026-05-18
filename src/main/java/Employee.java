@@ -20,26 +20,24 @@ public abstract class Employee implements Serializable {
     private static List<Employee> extent = new ArrayList<>();
 
     protected String name;
-
     protected String middleName;
-
     protected String surname;
-
     private final static double minSalary = 2000;
-
     protected List<String> emails = new ArrayList<>();
-
     protected LocalDate dateOfBirth;
-
     protected Role role;
-
     protected String peselNumber;
-
     private List<Reservation> reservations = new ArrayList<>();
-
     protected List<Restaurant> worksInRestaurants = new ArrayList<>();
 
-    public Employee(String name, String middleName, String surname, List<String> emails, LocalDate dateOfBirth, Role role, String pesel, List<Restaurant> restaurant) {
+    public Employee(String name, 
+                    String middleName, 
+                    String surname, 
+                    List<String> emails, 
+                    LocalDate dateOfBirth, 
+                    Role role, 
+                    String pesel, 
+                    List<Restaurant> restaurant) {
         this.name = validateString(name, "Name");
         this.middleName = middleName;
         this.surname = validateString(surname, "Surname");
@@ -53,6 +51,8 @@ public abstract class Employee implements Serializable {
         extent.add(this);
     }
 
+    //RESTAURANT LOGIC
+
     public void assignToRestaurant(List<Restaurant> restaurant){
         for(Restaurant r : restaurant){
             if(!worksInRestaurants.contains(r)){
@@ -62,7 +62,6 @@ public abstract class Employee implements Serializable {
             }
         }
     }
-    
     public void reassignFromRestaurant(Restaurant restaurant){
         if (worksInRestaurants.contains(restaurant)) {
             worksInRestaurants.remove(restaurant);
@@ -72,24 +71,19 @@ public abstract class Employee implements Serializable {
         }
     }
 
+    // RESERVATION LOGIC
+
     void addReservation(Reservation newReservation){
-        if (newReservation.getAssignedEmployee() != this) {
-            System.err.println("An Employee has been already assigned -> " + newReservation.getShortInfo() + ". Only Manager can change assigned Employee.");
-            return;
-        }
         if(!reservations.contains(newReservation)){
             reservations.add(newReservation);
         }
     }
-    
     void removeReservation(Reservation reservation){
         reservations.remove(reservation);
     }
-
     public long getActiveReservationCount(){
         return reservations.stream().filter(Reservation::isActive).count();
     }
-    
     public void changeReservationAssignedEmployee(Employee emp, Reservation reservation){
         if (getRole() != Role.Manager) {
             throw new IllegalArgumentException("Only Manager can alter Reservation info.");
@@ -98,6 +92,8 @@ public abstract class Employee implements Serializable {
         reservation.setAssignedEmployee(emp);
         emp.reservations.add(reservation);
     }
+
+    // EMAIL LOGIC
 
     private static String validateString(String value, String field){
         if (value == null || value.isBlank()){
@@ -115,9 +111,74 @@ public abstract class Employee implements Serializable {
             }
         }
     }
+     public void addEmail(String email){
+        if (emails.size() >= 3){
+            throw new
+                    IllegalStateException("Employee may have three emails at most");
+        }
+        if (email == null || email.isBlank()){
+            throw new IllegalArgumentException("Email can't be empty");
+        }
+        emails.add(email);
+    }
+
+    public void addEmail(String... emails){
+        for (String mail : emails) {
+            addEmail(mail);
+        }
+    }
+    public void removeEmail(String email){
+        if (emails.size() == 1){
+            throw new IllegalStateException("Employee must have at least one email");
+        }
+        if (email == null || email.isBlank()){
+            throw new IllegalArgumentException("Email can't be empty");
+        }
+        emails.remove(email);
+    }
+
+
+    // EXTENT LOGIC
+
     public static List<Employee> getExtent() {
         return List.copyOf(extent);
     }
+
+    public static void writeExtent(ObjectOutputStream stream) throws IOException{
+        stream.writeObject(extent);
+    }
+
+    public static void readExtent(ObjectInputStream stream) throws IOException, ClassNotFoundException{
+        Object object = stream.readObject();
+        if (object instanceof List<?>) {
+            extent = new ArrayList<>((List<Employee>) object);
+        } else throw new IOException("Something went wrong...");
+    }
+
+    public static void removeFromExtent(Employee emp){
+        extent.remove(emp);
+    }
+
+    public static void showExtent(){
+        extent.forEach(System.out::println);
+    }
+
+    public static void clearExtent(){
+        extent.clear();
+    }
+    
+
+    // FIND BY ROLE LOGIC
+    public static List<Employee> findByRole(Role role){
+        return extent.stream().filter(e -> e.role == role).toList();
+    }
+
+    public static List<Employee> findByRole(Role... roles){
+        return extent.stream().filter(e -> List.of(roles).contains(e.role)).toList();
+    }
+
+    
+    // GETTERS AND SETTERS
 
     public String getName() {
         return name;
@@ -164,32 +225,6 @@ public abstract class Employee implements Serializable {
         this.surname = surname;
     }
 
-    public void addEmail(String email){
-        if (emails.size() >= 3){
-            throw new
-                    IllegalStateException("Employee may have three emails at most");
-        }
-        if (email == null || email.isBlank()){
-            throw new IllegalArgumentException("Email can't be empty");
-        }
-        emails.add(email);
-    }
-
-    public void addEmail(String... emails){
-        for (String mail : emails) {
-            addEmail(mail);
-        }
-    }
-    public void removeEmail(String email){
-        if (emails.size() == 1){
-            throw new IllegalStateException("Employee must have at least one email");
-        }
-        if (email == null || email.isBlank()){
-            throw new IllegalArgumentException("Email can't be empty");
-        }
-        emails.remove(email);
-    }
-
     public void setDateOfBirth(LocalDate dateOfBirth) {
         this.dateOfBirth = dateOfBirth;
     }
@@ -197,32 +232,7 @@ public abstract class Employee implements Serializable {
     public void setRole(Role role) {
         this.role = role;
     }
-
-    public static List<Employee> findByRole(Role role){
-        return extent.stream().filter(e -> e.role == role).toList();
-    }
-
-    public static List<Employee> findByRole(Role... roles){
-        return extent.stream().filter(e -> List.of(roles).contains(e.role)).toList();
-    }
-    public static void writeExtent(ObjectOutputStream stream) throws IOException{
-        stream.writeObject(extent);
-    }
-
-    public static void readExtent(ObjectInputStream stream) throws IOException, ClassNotFoundException{
-        Object object = stream.readObject();
-        if (object instanceof List<?>) {
-            extent = new ArrayList<>((List<Employee>) object);
-        } else throw new IOException("Something went wrong...");
-    }
-
-    public static void showExtent(){
-        extent.forEach(System.out::println);
-    }
-    public static void clearExtent(){
-        extent.clear();
-    }
-
+    
     public static double getMinSalary() {
         return minSalary;
     }
@@ -234,12 +244,6 @@ public abstract class Employee implements Serializable {
     }
     public void setReservations(List<Reservation> reservations) {
         this.reservations = reservations;
-    }
-    
-    @Override
-    public String toString() {
-        return this.getClass().getSimpleName() + " [name=" + name + ", middleName=" + middleName + ", surname=" + surname + ", emails=" + emails
-                + ", dateOfBirth=" + dateOfBirth + ", role=" + role + ", reservations=" + reservations + ", works in " + worksInRestaurants.size() + " restaurants" + "]";
     }
 
     public String getPeselNumber() {
@@ -254,7 +258,16 @@ public abstract class Employee implements Serializable {
         return worksInRestaurants;
     }
 
-    public static void removeFromExtent(Employee emp){
-        extent.remove(emp);
-    }
+     @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + 
+                " [name=" + name + 
+                ", middleName=" + middleName 
+                + ", surname=" + surname 
+                + ", emails=" + emails
+                + ", dateOfBirth=" + dateOfBirth 
+                + ", role=" + role 
+                + ", reservations=" + reservations 
+                + ", works in " + worksInRestaurants.size() + " restaurants" + "]";
+    }    
 }
