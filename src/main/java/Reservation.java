@@ -1,4 +1,3 @@
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -21,16 +20,12 @@ public class Reservation implements Serializable{
     private String guestName;
     private String guestPhoneNumber;
     private LocalDateTime dateTimeOfReservation;
-
     private Employee assignedEmployee;
     private Restaurant.Table assignedTable;
-
     private Occasion occasion;
     private String decorationDescription;
-
     private static double minimumSpend = 800;
     private boolean securityRequired;
-
     private boolean active = true;
 
     private EnumSet<ReservationType> reservationType = EnumSet.of(ReservationType.Reservation);
@@ -52,6 +47,8 @@ public class Reservation implements Serializable{
         extent.add(this);
     }
 
+
+    // RESERVATION LIFECYCLE LOGIC 
     public void cancel(){
         if (!active) {
             throw new IllegalStateException("Reservation is already inactive.");
@@ -69,6 +66,7 @@ public class Reservation implements Serializable{
         this.active = false;
     }
 
+    // OVERLAPPING FIELDS GETTERS AND SETTERS
     public Occasion hasOccasion() throws Exception{
         if (reservationType.contains(ReservationType.CelebrationReservation)) {
             return occasion;
@@ -115,6 +113,8 @@ public class Reservation implements Serializable{
         }else throw new Exception("The reservation is not Private");
     }
 
+    
+    // AUXILIARY FUNCTIONS 
     private void assignEmployee(Employee emp){
         if(emp == null){
             throw new IllegalArgumentException("Assigned employee can't be null");
@@ -141,8 +141,23 @@ public class Reservation implements Serializable{
     public boolean isActive(){
         return active;
     }
+
     public String getShortInfo(){
         return getGuestName() + ", at " + getDateTimeOfReservation() + " at Table number: " + getAssignedTable().getTableNumber() + ". Employee -> " + getAssignedEmployee().getName() + " " + getAssignedEmployee().getSurname();
+    }
+
+    
+    // EXTENT LOGIC
+
+    public static void readExtent(ObjectInputStream stream) throws IOException, ClassNotFoundException{
+        Object object = stream.readObject();
+        if (object instanceof List<?>) {
+            extent = new ArrayList<>((List<Reservation>) object);
+        }else throw new IOException("Unable to read from extent");
+    }
+
+    public static void writeExtent(ObjectOutputStream stream) throws IOException{
+        stream.writeObject(extent);
     }
 
     public static void showExtent(){
@@ -156,6 +171,9 @@ public class Reservation implements Serializable{
     public static List<Reservation> getExtent() {
         return extent;
     }
+
+
+    // GETTERS AND SETTERS
 
     public String getGuestName() {
         return guestName;
@@ -206,19 +224,4 @@ public class Reservation implements Serializable{
                 + ", assignedEmployee=" + assignedEmployee.getName()
                 + ", assignedTable=" + assignedTable.getTableNumber() + "]";
     }
-
-    public static void readExtent(ObjectInputStream stream) throws IOException, ClassNotFoundException{
-        Object object = stream.readObject();
-        if (object instanceof List<?>) {
-            extent = new ArrayList<>((List<Reservation>) object);
-        }else throw new IOException("Unable to read from extent");
-    }
-
-    public static void writeExtent(ObjectOutputStream stream) throws IOException{
-        stream.writeObject(extent);
-    }
-
-    // suki ahahhaha
-
-    //suki aahahahahh2
 }
