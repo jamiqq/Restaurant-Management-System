@@ -1,8 +1,11 @@
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -138,6 +141,35 @@ public class Restaurant implements Serializable{
         return tables;
     }
 
+    public Reservation reserveTable(
+            int tableNumber,
+            String guestName,
+            String guestPhoneNumber,
+            LocalDateTime dateTime,
+            boolean isCelebration,
+            boolean isPrivate) throws Exception{
+        
+        Restaurant.Table table = tables.stream()
+                .filter(t -> t.getTableNumber() == tableNumber && !t.isReservedAt(dateTime))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                    "Table " + tableNumber + " is either not found or already reserved for that time slot."));
+
+        Employee assignedEmp = empQualifier.values().stream()
+                .filter(e -> e.getRole() == Employee.Role.Waiter || e.getRole() == Employee.Role.Intern)
+                .min(Comparator.comparingLong(Employee::getActiveReservationCount))
+                .orElseThrow(() -> new IllegalStateException(
+                    "No eligible employee (Waiter or Intern) available in this restaurant."));
+
+        return new Reservation(guestName, guestPhoneNumber, dateTime, assignedEmp, table, isCelebration, isPrivate);
+    }
+
+    public List<Restaurant.Table> findAvailableTables(LocalDateTime time){
+        return tables.stream()
+            .filter(t -> !t.isReservedAt(time))
+            .toList();
+    }
+
     public BarTable addBarTable(int tableNumber, String tableType, Table.Location location, Table.Section section, boolean hasSunshade, int distance) throws Exception{
         if (location == Table.Location.Inside) {
             BarTable table = new BarTable(tableNumber, tableType, location, section,  false, distance);
@@ -224,19 +256,24 @@ public class Restaurant implements Serializable{
 
         private boolean hasSunshade;
 
-        private Table(int tableNumber, String tableType, Location location, Section section, boolean hasSunshade){
-        this.tableNumber = tableNumber;
-        this.tableType = tableType;
+        private Table(int tableNumber, String tableType, Location location, Section section, boolean hasSunshade) {
+            this.tableNumber = tableNumber;
+            this.tableType = tableType;
+            this.location = location;
+            this.section = (location == Location.Inside) ? section : null;
+            this.hasSunshade = (location == Location.Outside) && hasSunshade;
+            extent.add(this);
+        }
 
-        this.location = location;
-        if (location == Location.Inside) {
-            this.section = section;
-        }else this.section = null;
-        if (location == Location.Outside) {
-            this.hasSunshade = hasSunshade;
-        }else this.hasSunshade = false;
-
-        extent.add(this);
+        public boolean isReservedAt(LocalDateTime requestedStart){
+            LocalDateTime requestedEnd = requestedStart.plusHours(Reservation.durationHours);
+            return reservations.stream()
+                .filter(Reservation::isActive)
+                .anyMatch(r -> {
+                    LocalDateTime existingStart = r.getDateTimeOfReservation();
+                    LocalDateTime existingEnd = r.getEndTime();
+                    return requestedStart.isBefore(existingEnd) && requestedEnd.isAfter(existingStart);
+                });
         }
 
         public Location getLocation(){
@@ -273,22 +310,19 @@ public class Restaurant implements Serializable{
             return Restaurant.this;
         }
         
-        public void addReservation(Reservation newReservation){
-            if(!reservations.contains(newReservation) && newReservation.getAssignedTable() == this){
-                reservations.add(newReservation);
-        
-                newReservation.assignTable(this);
+        void addReservation(Reservation newReservation){
+            if (isReservedAt(newReservation.getDateTimeOfReservation())) {
+               throw new IllegalStateException(
+                    "Table " + tableNumber + " is already reserved for the requested time slot"
+               );
             }
-            
+            if (!reservations.contains(newReservation)) {
+                reservations.add(newReservation);
+            }
         }
 
-        public void cancelReservation(Employee emp, Reservation reservation){
-            if(reservations.contains(reservation)){
-                reservations.remove(reservation);
-
-                emp.cancelReservation(reservation, this);
-                reservation.cancelReservation(emp, this);
-            }
+        void removeReservation(Reservation reservation){
+            reservations.remove(reservation);
         }
 
         public static void showExtent(){

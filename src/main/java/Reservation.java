@@ -1,3 +1,4 @@
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -12,6 +13,8 @@ enum ReservationType {Reservation, CelebrationReservation, PrivateReservation};
 public class Reservation implements Serializable{
 
     public enum Occasion {Birthday, Wedding, Corporate, Custom};
+
+    protected static final int durationHours = 2;
     
     private static List<Reservation> extent = new ArrayList<>();
 
@@ -27,6 +30,8 @@ public class Reservation implements Serializable{
 
     private static double minimumSpend = 800;
     private boolean securityRequired;
+
+    private boolean active = true;
 
     private EnumSet<ReservationType> reservationType = EnumSet.of(ReservationType.Reservation);
 
@@ -45,6 +50,23 @@ public class Reservation implements Serializable{
         }
 
         extent.add(this);
+    }
+
+    public void cancel(){
+        if (!active) {
+            throw new IllegalStateException("Reservation is already inactive.");
+        }
+        this.active = false;
+        extent.remove(this);
+        assignedEmployee.removeReservation(this);
+        assignedTable.removeReservation(this);
+    }
+
+    public void stopReservation(){
+        if (!active) {
+            throw new IllegalStateException("Reservation is already inactive.");
+        }
+        this.active = false;
     }
 
     public Occasion hasOccasion() throws Exception{
@@ -67,9 +89,9 @@ public class Reservation implements Serializable{
         throw new Exception("The reservation is not Celebration");
     }
 
-    public String setDecorationDescription(String desc) throws Exception{
+    public void setDecorationDescription(String desc) throws Exception{
         if(reservationType.contains(ReservationType.CelebrationReservation)){
-            return desc;
+            this.decorationDescription = desc;
         }else throw new Exception("The reservation is not Celebration");
     }
 
@@ -93,18 +115,7 @@ public class Reservation implements Serializable{
         }else throw new Exception("The reservation is not Private");
     }
 
-    public void cancelReservation(Employee emp, Restaurant.Table table){
-        if (emp == null || table == null) {
-            return;
-        }
-        extent.remove(this);
-        emp.cancelReservation(this, table);
-        table.cancelReservation(emp, this);
-        emp = null;
-        table = null;
-    }
-
-    public void assignEmployee(Employee emp){
+    private void assignEmployee(Employee emp){
         if(emp == null){
             throw new IllegalArgumentException("Assigned employee can't be null");
         }
@@ -112,17 +123,24 @@ public class Reservation implements Serializable{
             throw new IllegalArgumentException("Assigned employee must be a Waiter or an Intern.");
         }
         assignedEmployee = emp;
-        emp.addReservation(this);
+        assignedEmployee.addReservation(this);
     }
 
-    public void assignTable(Restaurant.Table table){
+    private void assignTable(Restaurant.Table table){
         if(table == null){
             throw new IllegalArgumentException("Assigned table can't be null");
         }
         assignedTable = table;
-        table.addReservation(this);
+        assignedTable.addReservation(this);
     }
 
+    public LocalDateTime getEndTime(){
+        return dateTimeOfReservation.plusHours(durationHours);
+    }
+
+    public boolean isActive(){
+        return active;
+    }
     public String getShortInfo(){
         return getGuestName() + ", at " + getDateTimeOfReservation() + " at Table number: " + getAssignedTable().getTableNumber() + ". Employee -> " + getAssignedEmployee().getName() + " " + getAssignedEmployee().getSurname();
     }
@@ -181,8 +199,11 @@ public class Reservation implements Serializable{
 
     @Override
     public String toString() {
-        return "Reservation " + reservationType + " [guestName=" + guestName + ", guestPhoneNumber=" + guestPhoneNumber
-                + ", dateTimeOfReservation=" + dateTimeOfReservation + ", assignedEmployee=" + assignedEmployee.getName()
+        return "Reservation " + reservationType
+                + " [guestName=" + guestName 
+                + ", guestPhoneNumber=" + guestPhoneNumber
+                + ", dateTimeOfReservation=" + dateTimeOfReservation 
+                + ", assignedEmployee=" + assignedEmployee.getName()
                 + ", assignedTable=" + assignedTable.getTableNumber() + "]";
     }
 

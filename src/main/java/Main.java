@@ -1,3 +1,4 @@
+
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
@@ -8,7 +9,7 @@ import java.util.List;
 
 public class Main {
 
-    private final String pathToFile = "extent.bin";
+    private final String pathToFile = "../../../extent.bin";
 
     public static void main(String[] args) throws Exception {
 
