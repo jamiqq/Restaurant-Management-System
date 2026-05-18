@@ -71,20 +71,32 @@ public abstract class Employee implements Serializable {
             restaurant.removerEmpQualifier(this);
         }
     }
-    public void addReservation(Reservation newReservation){
+
+    void addReservation(Reservation newReservation){
+        if (newReservation.getAssignedEmployee() != this) {
+            System.err.println("An Employee has been already assigned -> " + newReservation.getShortInfo() + ". Only Manager can change assigned Employee.");
+            return;
+        }
         if(!reservations.contains(newReservation)){
             reservations.add(newReservation);
-        
-            newReservation.assignEmployee(this);
         }
     }
-    public void cancelReservation(Reservation reservation, Restaurant.Table reservedTable){
-        if (reservations.contains(reservation)) {
-            reservations.remove(reservation);
-        
-            reservedTable.cancelReservation(this, reservation);
-            reservation.cancelReservation(this, reservedTable);
+    
+    void removeReservation(Reservation reservation){
+        reservations.remove(reservation);
+    }
+
+    public long getActiveReservationCount(){
+        return reservations.stream().filter(Reservation::isActive).count();
+    }
+    
+    public void changeReservationAssignedEmployee(Employee emp, Reservation reservation){
+        if (getRole() != Role.Manager) {
+            throw new IllegalArgumentException("Only Manager can alter Reservation info.");
         }
+        reservation.getAssignedEmployee().reservations.remove(reservation);
+        reservation.setAssignedEmployee(emp);
+        emp.reservations.add(reservation);
     }
 
     private static String validateString(String value, String field){
@@ -103,7 +115,6 @@ public abstract class Employee implements Serializable {
             }
         }
     }
-    
     public static List<Employee> getExtent() {
         return List.copyOf(extent);
     }
