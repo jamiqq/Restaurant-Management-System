@@ -12,11 +12,8 @@ public class FullTimeEmployee extends Employee{
     }
 
     private static List<FullTimeEmployee> extent = new ArrayList<>();
-
     private Insurance insuranceType;
-
     private static int paidVacationDays = 28;
-
     private int usedVacationDays;
 
     public FullTimeEmployee(String name, String middleName, String surname, List<String> emails, LocalDate dateOfBirth,
@@ -85,6 +82,8 @@ public class FullTimeEmployee extends Employee{
 
     @Override
     public String toString(){
-        return super.toString() + ", insuranceType=" + insuranceType + ", usedVacationDays=" + usedVacationDays + " ]";
+        return super.toString() + 
+            ", insuranceType=" + insuranceType + 
+            ", usedVacationDays=" + usedVacationDays + " ]";
     }
 }

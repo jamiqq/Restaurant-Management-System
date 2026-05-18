@@ -8,7 +8,6 @@ public class PartTimeEmployee extends Employee{
     private static List<PartTimeEmployee> extent = new ArrayList<>();
 
     private double hourlyRate;
-
     private int weeklyWorkingHours;
 
     public PartTimeEmployee(String name, String middleName, String surname, List<String> emails, LocalDate dateOfBirth,
@@ -74,6 +73,8 @@ public class PartTimeEmployee extends Employee{
 
     @Override
     public String toString(){
-        return super.toString() +  ", hourlyRate=" + hourlyRate + ", weeklyWorkingHours" + weeklyWorkingHours + " ]";
+        return super.toString() 
+            +  ", hourlyRate=" + hourlyRate 
+            + ", weeklyWorkingHours" + weeklyWorkingHours + " ]";
     }
 }
