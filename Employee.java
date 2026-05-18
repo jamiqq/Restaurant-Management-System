@@ -212,7 +212,7 @@ public abstract class Employee implements Serializable {
         extent.clear();
     }
 
-    public static double getMinsalary() {
+    public static double getMinSalary() {
         return minSalary;
     }
     public void setEmails(List<String> emails) {

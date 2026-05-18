@@ -1,3 +1,6 @@
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -174,5 +177,16 @@ public class Reservation implements Serializable{
         return "Reservation " + reservationType + " [guestName=" + guestName + ", guestPhoneNumber=" + guestPhoneNumber
                 + ", dateTimeOfReservation=" + dateTimeOfReservation + ", assignedEmployee=" + assignedEmployee.getName()
                 + ", assignedTable=" + assignedTable.getTableNumber() + "]";
+    }
+
+    public static void readExtent(ObjectInputStream stream) throws IOException, ClassNotFoundException{
+        Object object = stream.readObject();
+        if (object instanceof List<?>) {
+            extent = new ArrayList<>((List<Reservation>) object);
+        }else throw new IOException("Unable to read from extent");
+    }
+
+    public static void writeExtent(ObjectOutputStream stream) throws IOException{
+        stream.writeObject(extent);
     }
 }
