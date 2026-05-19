@@ -1,6 +1,7 @@
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.time.LocalDate;
@@ -9,7 +10,7 @@ import java.util.List;
 
 public class Main {
 
-    private final String pathToFile = "../../../extent.bin";
+    private static final String pathToFile = "extent.bin";
 
     public static void main(String[] args) throws Exception {
 
@@ -349,6 +350,53 @@ public class Main {
                 LocalDateTime.of(2026, 6, 25, 12, 0),
                 emp3_2, r3_t1,
                 false, false);
+        
 
-    }
+        // -----------------------------------------------
+        // Persistence — write all extents to file
+        // -----------------------------------------------
+
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(pathToFile))) {
+            Restaurant.writeExtent(oos);
+            Employee.writeExtent(oos);
+            Reservation.writeExtent(oos);
+            Restaurant.Table.writeExtent(oos);
+            System.out.println("\n=== Extents written to " + pathToFile + " ===");
+        } catch (IOException e) {
+            System.err.println("Failed to write extents: " + e.getMessage());
+        }
+
+        // -----------------------------------------------
+        // Persistence — clear everything and read back
+        // -----------------------------------------------
+
+        Restaurant.clearExtent();
+        Employee.clearExtent();
+        Reservation.clearExtent();
+        Restaurant.Table.clearExtent();
+
+        System.out.println("\n=== Extents cleared — reading back from file ===");
+
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(pathToFile))) {
+            Restaurant.readExtent(ois);
+            Employee.readExtent(ois);
+            Reservation.readExtent(ois);
+            Restaurant.Table.readExtent(ois);
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Failed to read extents: " + e.getMessage());
+        }
+
+        // -----------------------------------------------
+        // Verify restored state
+        // -----------------------------------------------
+
+        System.out.println("\n=== Restaurants after restore ===");
+        Restaurant.showExtent();
+
+        System.out.println("\n=== Employees after restore ===");
+        Employee.showExtent();
+
+        System.out.println("\n=== Active reservations after restore ===");
+        Reservation.showExtent();
+    }   
 }
