@@ -81,9 +81,11 @@ public abstract class Employee implements Serializable {
     void removeReservation(Reservation reservation){
         reservations.remove(reservation);
     }
+    
     public long getActiveReservationCount(){
         return reservations.stream().filter(Reservation::isActive).count();
     }
+
     public void changeReservationAssignedEmployee(Employee emp, Reservation reservation){
         if (getRole() != Role.Manager) {
             throw new IllegalArgumentException("Only Manager can alter Reservation info.");

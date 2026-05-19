@@ -4,7 +4,6 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -98,32 +97,33 @@ public class Restaurant implements Serializable{
     // RESERVATION LOGIC 
 
     public Reservation reserveTable(
-            int tableNumber,
-            String guestName,
-            String guestPhoneNumber,
-            LocalDateTime dateTime,
-            boolean isCelebration,
-            boolean isPrivate) throws Exception{
-        
-        Restaurant.Table table = tables.stream()
-                .filter(t -> t.getTableNumber() == tableNumber && !t.isReservedAt(dateTime))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException(
-                    "Table " + tableNumber + " is either not found or already reserved for that time slot."));
+        int tableNumber,
+        String guestName,
+        String guestPhoneNumber,
+        LocalDateTime dateTime,
+        boolean isCelebration,
+        boolean isPrivate,
+        String employeePesel) throws Exception {
 
-        Employee assignedEmp = empQualifier.values().stream()
-                .filter(e -> e.getRole() == Employee.Role.Waiter || e.getRole() == Employee.Role.Intern)
-                .min(Comparator.comparingLong(Employee::getActiveReservationCount))
-                .orElseThrow(() -> new IllegalStateException(
-                    "No eligible employee (Waiter or Intern) available in this restaurant."));
+    Restaurant.Table table = tables.stream()
+            .filter(t -> t.getTableNumber() == tableNumber && !t.isReservedAt(dateTime))
+            .findFirst()
+            .orElseThrow(() -> new IllegalStateException(
+                "Table " + tableNumber + " is either not found or already reserved for that time slot."));
 
-        return new Reservation(guestName, guestPhoneNumber, dateTime, assignedEmp, table, isCelebration, isPrivate);
+    Employee assignedEmp = findEmployeeByPeselNumber(employeePesel);
+
+    if (assignedEmp.getRole() != Employee.Role.Waiter
+            && assignedEmp.getRole() != Employee.Role.Intern) {
+        throw new IllegalArgumentException(
+            "Employee " + employeePesel + " is not a Waiter or Intern.");
+    }
+
+    return new Reservation(guestName, guestPhoneNumber, dateTime, assignedEmp, table, isCelebration, isPrivate);
     }
 
     public List<Restaurant.Table> findAvailableTables(LocalDateTime time){
-        return tables.stream()
-            .filter(t -> !t.isReservedAt(time))
-            .toList();
+        return tables.stream().filter(t -> !t.isReservedAt(time)).toList();
     }
 
     

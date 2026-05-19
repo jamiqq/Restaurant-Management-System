@@ -1,0 +1,122 @@
+-------------------------------------------------------------------------------
+Test set: ReservationSystemTest$RestaurantReserveTable$EmployeeReservationCount
+-------------------------------------------------------------------------------
+Tests run: 8, Failures: 0, Errors: 8, Skipped: 0, Time elapsed: 0.006 s <<< FAILURE! -- in ReservationSystemTest$RestaurantReserveTable$EmployeeReservationCount
+ReservationSystemTest$RestaurantReserveTable.autoAssignedEmployeeIsEligible -- Time elapsed: 0 s <<< ERROR!
+java.lang.Error: 
+Unresolved compilation problem: 
+	Syntax error, insert "}" to complete ClassBody
+
+	at ReservationSystemTest.<init>(ReservationSystemTest.java:548)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:499)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:483)
+	at java.base/java.util.Optional.orElseGet(Optional.java:364)
+	at java.base/java.util.Optional.orElseGet(Optional.java:364)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+
+ReservationSystemTest$RestaurantReserveTable.doubleBookingThrows -- Time elapsed: 0 s <<< ERROR!
+java.lang.Error: 
+Unresolved compilation problem: 
+	Syntax error, insert "}" to complete ClassBody
+
+	at ReservationSystemTest.<init>(ReservationSystemTest.java:548)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:499)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:483)
+	at java.base/java.util.Optional.orElseGet(Optional.java:364)
+	at java.base/java.util.Optional.orElseGet(Optional.java:364)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+
+ReservationSystemTest$RestaurantReserveTable.leastLoadedEmployeePreferred -- Time elapsed: 0.001 s <<< ERROR!
+java.lang.Error: 
+Unresolved compilation problem: 
+	Syntax error, insert "}" to complete ClassBody
+
+	at ReservationSystemTest.<init>(ReservationSystemTest.java:548)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:499)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:483)
+	at java.base/java.util.Optional.orElseGet(Optional.java:364)
+	at java.base/java.util.Optional.orElseGet(Optional.java:364)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+
+ReservationSystemTest$RestaurantReserveTable.reserveTableCreatesReservation -- Time elapsed: 0 s <<< ERROR!
+java.lang.Error: 
+Unresolved compilation problem: 
+	Syntax error, insert "}" to complete ClassBody
+
+	at ReservationSystemTest.<init>(ReservationSystemTest.java:548)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:499)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:483)
+	at java.base/java.util.Optional.orElseGet(Optional.java:364)
+	at java.base/java.util.Optional.orElseGet(Optional.java:364)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+
+ReservationSystemTest$RestaurantReserveTable.nonExistentTableThrows -- Time elapsed: 0 s <<< ERROR!
+java.lang.Error: 
+Unresolved compilation problem: 
+	Syntax error, insert "}" to complete ClassBody
+
+	at ReservationSystemTest.<init>(ReservationSystemTest.java:548)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:499)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:483)
+	at java.base/java.util.Optional.orElseGet(Optional.java:364)
+	at java.base/java.util.Optional.orElseGet(Optional.java:364)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+
+ReservationSystemTest$RestaurantReserveTable$EmployeeReservationCount.countDecrementsAfterCancel -- Time elapsed: 0.001 s <<< ERROR!
+java.lang.Error: 
+Unresolved compilation problem: 
+	Syntax error, insert "}" to complete ClassBody
+
+	at ReservationSystemTest.<init>(ReservationSystemTest.java:548)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:499)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:483)
+	at java.base/java.util.Optional.orElseGet(Optional.java:364)
+	at java.base/java.util.Optional.orElseGet(Optional.java:364)
+	at java.base/java.util.Optional.orElseGet(Optional.java:364)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+
+ReservationSystemTest$RestaurantReserveTable$EmployeeReservationCount.countDecrementsAfterStop -- Time elapsed: 0.001 s <<< ERROR!
+java.lang.Error: 
+Unresolved compilation problem: 
+	Syntax error, insert "}" to complete ClassBody
+
+	at ReservationSystemTest.<init>(ReservationSystemTest.java:548)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:499)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:483)
+	at java.base/java.util.Optional.orElseGet(Optional.java:364)
+	at java.base/java.util.Optional.orElseGet(Optional.java:364)
+	at java.base/java.util.Optional.orElseGet(Optional.java:364)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+
+ReservationSystemTest$RestaurantReserveTable$EmployeeReservationCount.countIncrementsOnAdd -- Time elapsed: 0.001 s <<< ERROR!
+java.lang.Error: 
+Unresolved compilation problem: 
+	Syntax error, insert "}" to complete ClassBody
+
+	at ReservationSystemTest.<init>(ReservationSystemTest.java:548)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:499)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:483)
+	at java.base/java.util.Optional.orElseGet(Optional.java:364)
+	at java.base/java.util.Optional.orElseGet(Optional.java:364)
+	at java.base/java.util.Optional.orElseGet(Optional.java:364)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+

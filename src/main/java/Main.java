@@ -70,6 +70,8 @@ public class Main {
                 Restaurant.Table.Section.Modern, false, false, true);
         Restaurant.BarTable r3_t8 = r3.addBarTable(8, "Tall Round", Restaurant.Table.Location.Inside,
                 Restaurant.Table.Section.Family, false, 1);
+
+                
         // -----------------------------------------------
         // Restaurant 1 — Marszalkowska 14
         // -----------------------------------------------
@@ -348,6 +350,5 @@ public class Main {
                 emp3_2, r3_t1,
                 false, false);
 
-       
     }
 }

@@ -49,9 +49,12 @@ public class Reservation implements Serializable{
 
 
     // RESERVATION LIFECYCLE LOGIC 
-    public void cancel(){
+    public void cancel(Employee emp){
         if (!active) {
             throw new IllegalStateException("Reservation is already inactive.");
+        }
+        if (!emp.equals(assignedEmployee)) {
+            throw new IllegalArgumentException("Only the assigned employee can cancel the reservation.");
         }
         this.active = false;
         extent.remove(this);
@@ -59,9 +62,12 @@ public class Reservation implements Serializable{
         assignedTable.removeReservation(this);
     }
 
-    public void stopReservation(){
+    public void stopReservation(Employee emp){
         if (!active) {
             throw new IllegalStateException("Reservation is already inactive.");
+        }
+        if (!emp.equals(assignedEmployee)) {
+            throw new IllegalArgumentException("Only the assigned employee can stop the reservation.");
         }
         this.active = false;
     }
