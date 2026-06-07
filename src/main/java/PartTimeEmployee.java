@@ -18,7 +18,7 @@ public class PartTimeEmployee extends Employee{
         extent.add(this);
     }
 
-    public PartTimeEmployee(Employee prevEmp, double hourlyRate, int weeklyWorkingHours) {
+    private PartTimeEmployee(Employee prevEmp, double hourlyRate, int weeklyWorkingHours) {
         super(prevEmp.name, prevEmp.middleName, prevEmp.surname, prevEmp.emails, prevEmp.dateOfBirth, prevEmp.role, prevEmp.peselNumber, prevEmp.worksInRestaurants);
         this.hourlyRate = hourlyRate;
         this.weeklyWorkingHours = weeklyWorkingHours;
@@ -28,6 +28,9 @@ public class PartTimeEmployee extends Employee{
         extent.add(this);
     }
 
+    public static PartTimeEmployee changeContractToPartTime(Employee prevEmployee, double hourlyRate, int weeklyWorkingHours){
+        return new PartTimeEmployee(prevEmployee, hourlyRate, weeklyWorkingHours);
+    }
 
     public double getHourlyRate() {
         return hourlyRate;

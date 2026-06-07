@@ -5,7 +5,6 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 public abstract class Employee implements Serializable {
@@ -38,14 +37,14 @@ public abstract class Employee implements Serializable {
                     Role role, 
                     String pesel, 
                     List<Restaurant> restaurant) {
-        this.name = validateString(name, "Name");
-        this.middleName = middleName;
-        this.surname = validateString(surname, "Surname");
+        setName(name);
+        setMiddleName(middleName);
+        setSurname(surname);
         validateEmail(emails);
-        this.emails = new ArrayList<>(emails);
-        this.dateOfBirth = Objects.requireNonNull(dateOfBirth, "Date of birth can't be null");
-        this.role = Objects.requireNonNull(role, "Role can't be null");
-        this.peselNumber = pesel;
+        setEmails(emails);
+        setDateOfBirth(dateOfBirth);
+        setRole(role);
+        setPeselNumber(pesel);
         assignToRestaurant(restaurant);
 
         extent.add(this);
@@ -71,9 +70,33 @@ public abstract class Employee implements Serializable {
         }
     }
 
+    public void promoteIntern(Employee emp, Role promotedRole){
+        if (role != Role.Manager) {
+            throw new IllegalStateException("Only Manager may promote Employees.");
+        }
+        if (emp.role != Role.Intern) {
+            throw new IllegalStateException("Only Interns may be promoted but provided: " + emp.getRole() + "[" + emp.getPeselNumber() + "].");
+        }
+        if (promotedRole == Role.Intern) {
+            throw new IllegalStateException("Cannot promote to Intern.");
+        }
+        emp.role = promotedRole;
+    }
+
     // RESERVATION LOGIC
 
+    public static boolean canBeAssignedToReservation(Employee emp) {
+        return emp != null && (emp.role == Role.Waiter || emp.role == Role.Intern);
+    }
+
+    public static void requireAssignableToReservation(Employee emp) {
+        if (!canBeAssignedToReservation(emp)) {
+            throw new IllegalArgumentException("Assigned employee must be a Waiter or an Intern.");
+        }
+    }
+
     void addReservation(Reservation newReservation){
+        requireAssignableToReservation(this);
         if(!reservations.contains(newReservation)){
             reservations.add(newReservation);
         }
@@ -83,13 +106,15 @@ public abstract class Employee implements Serializable {
     }
     
     public long getActiveReservationCount(){
-        return reservations.stream().filter(Reservation::isActive).count();
+        var reservationsCopy = List.copyOf(reservations);
+        return reservationsCopy.stream().filter(Reservation::isActive).count();
     }
 
     public void changeReservationAssignedEmployee(Employee emp, Reservation reservation){
         if (getRole() != Role.Manager) {
             throw new IllegalArgumentException("Only Manager can alter Reservation info.");
         }
+        requireAssignableToReservation(emp);
         reservation.getAssignedEmployee().reservations.remove(reservation);
         reservation.setAssignedEmployee(emp);
         emp.reservations.add(reservation);
@@ -103,6 +128,7 @@ public abstract class Employee implements Serializable {
         }
         return value;
     }
+
     private static void validateEmail(List<String> mails){
         if (mails == null || mails.isEmpty()){
             throw new IllegalArgumentException("There should be at least one email");
@@ -118,17 +144,16 @@ public abstract class Employee implements Serializable {
             throw new
                     IllegalStateException("Employee may have three emails at most");
         }
-        if (email == null || email.isBlank()){
-            throw new IllegalArgumentException("Email can't be empty");
-        }
         emails.add(email);
     }
 
-    public void addEmail(String... emails){
+    private void setEmails(List<String> emails){
+        validateEmail(emails);
         for (String mail : emails) {
             addEmail(mail);
         }
     }
+
     public void removeEmail(String email){
         if (emails.size() == 1){
             throw new IllegalStateException("Employee must have at least one email");
@@ -216,36 +241,50 @@ public abstract class Employee implements Serializable {
     }
 
     public void setName(String name) {
+        validateString(name, "Name");
         this.name = name;
     }
 
     public void setMiddleName(String middleName) {
+        if (middleName == null) {
+            this.middleName = null;
+            return;
+        }
+        if (middleName.isEmpty()) {
+            throw new IllegalArgumentException("Middle name cannot be empty");
+        }
         this.middleName = middleName;
     }
 
     public void setSurname(String surname) {
+        validateString(surname, "Surname");
         this.surname = surname;
     }
 
     public void setDateOfBirth(LocalDate dateOfBirth) {
+        if (dateOfBirth == null) {
+            throw new IllegalArgumentException("Date of birth cannot be empty");
+        }
+        if (dateOfBirth.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("Date of birth cannot be in the future");
+        }
         this.dateOfBirth = dateOfBirth;
     }
 
     public void setRole(Role role) {
+        if (role == null) {
+            throw new IllegalArgumentException("Role cannot be null");
+        }
         this.role = role;
     }
     
     public static double getMinSalary() {
         return minSalary;
     }
-    public void setEmails(List<String> emails) {
-        this.emails = emails;
-    }
+
     public List<Reservation> getReservations() {
-        return reservations;
-    }
-    public void setReservations(List<Reservation> reservations) {
-        this.reservations = reservations;
+        var reservationCopy = List.copyOf(reservations);
+        return reservationCopy;
     }
 
     public String getPeselNumber() {
@@ -253,11 +292,13 @@ public abstract class Employee implements Serializable {
     }
 
     public void setPeselNumber(String peselNumber) {
+        validateString(peselNumber, "Pesel number");
         this.peselNumber = peselNumber;
     }
 
     public List<Restaurant> getWorksInRestaurants() {
-        return worksInRestaurants;
+        var restaurantsCopy = List.copyOf(worksInRestaurants);
+        return restaurantsCopy;
     }
 
      @Override

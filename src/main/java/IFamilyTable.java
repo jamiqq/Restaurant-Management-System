@@ -2,7 +2,7 @@ public interface IFamilyTable {
 
     boolean getIsExtendable();
     void setIsExtendable(boolean val);
-    boolean getHasKidChair();
-    void setHasKidChair(boolean val);
+    boolean getHasInfantChair();
+    void setHasInfantChair(boolean val);
     double calculateKidDiscount(int numOfKids);
 }

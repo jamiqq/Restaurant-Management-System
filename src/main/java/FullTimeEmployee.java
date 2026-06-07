@@ -24,7 +24,7 @@ public class FullTimeEmployee extends Employee{
         extent.add(this);
     }
 
-    public FullTimeEmployee(Employee prevEmp, FullTimeEmployee.Insurance insuranceType) {
+    private FullTimeEmployee(Employee prevEmp, FullTimeEmployee.Insurance insuranceType) {
         super(prevEmp.name, prevEmp.middleName, prevEmp.surname, prevEmp.emails, prevEmp.dateOfBirth, prevEmp.role, prevEmp.peselNumber, prevEmp.worksInRestaurants);
         this.insuranceType = insuranceType;
         usedVacationDays = 0;
@@ -34,6 +34,10 @@ public class FullTimeEmployee extends Employee{
         extent.add(this);
     }
 
+    public static FullTimeEmployee changeContractToFullTime(Employee prevEmp, FullTimeEmployee.Insurance insurance){
+        return new FullTimeEmployee(prevEmp, insurance);
+    }
+    
     public Insurance getInsuranceType() {
         return insuranceType;
     }
@@ -58,7 +62,14 @@ public class FullTimeEmployee extends Employee{
     public static List<FullTimeEmployee> getFullTimeEmployeeExtent() {
         return extent;
     }
-    
+
+    public void useVacationDays(int days){
+        if (calculateUsedVacationDays() + days > 28) {
+            throw new IllegalStateException("Not possible to add vacation days. Vacation days left: " + calculateUsedVacationDays());
+        }
+        usedVacationDays =+ usedVacationDays + days;
+    }
+
     public int getUsedVacationDays() {
         return usedVacationDays;
     }
