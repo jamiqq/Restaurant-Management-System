@@ -17,10 +17,10 @@ public class Storage implements Serializable{
     private List<Restaurant> restaurants = new ArrayList<>();
 
     public Storage(String streetName, int buildingNumber, int capacity, double temperature) {
-        this.streetName = streetName;
-        this.buildingNumber = buildingNumber;
-        this.capacity = capacity;
-        this.temperature = temperature;
+        setStreetName(streetName);
+        setBuildingNumber(buildingNumber);
+        setCapacity(capacity);
+        setTemperature(temperature);
 
         extent.add(this);
     }
@@ -50,7 +50,7 @@ public class Storage implements Serializable{
     }
 
      public static List<Storage> getExtent() {
-        return extent;
+        return List.copyOf(extent);
     }
 
     public String getStreetName() {
@@ -58,6 +58,9 @@ public class Storage implements Serializable{
     }
 
     public void setStreetName(String streetName) {
+        if (streetName == null || streetName.isBlank()) {
+            throw new IllegalArgumentException("Street name cannot be null");
+        }
         this.streetName = streetName;
     }
 
@@ -66,6 +69,9 @@ public class Storage implements Serializable{
     }
 
     public void setBuildingNumber(int buildingNumber) {
+        if (buildingNumber < 1) {
+            throw new IllegalArgumentException("Building number is irrelevant");
+        }
         this.buildingNumber = buildingNumber;
     }
 
@@ -74,6 +80,9 @@ public class Storage implements Serializable{
     }
 
     public void setCapacity(int capacity) {
+        if (capacity < 800) {
+            throw new IllegalArgumentException("Capacity is irrelevant");
+        }
         this.capacity = capacity;
     }
 
@@ -82,15 +91,14 @@ public class Storage implements Serializable{
     }
 
     public void setTemperature(double temperature) {
+        if (temperature < -16.0 || temperature > 25.2) {
+            throw new IllegalArgumentException("Temperature is irrelevant");
+        }
         this.temperature = temperature;
     }
 
     public List<Restaurant> getRestaurants() {
-        return restaurants;
-    }
-
-    public void setRestaurants(List<Restaurant> restaurants) {
-        this.restaurants = restaurants;
+        return List.copyOf(restaurants);
     }
 
     @Override

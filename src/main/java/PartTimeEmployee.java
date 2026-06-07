@@ -12,16 +12,16 @@ public class PartTimeEmployee extends Employee{
     public PartTimeEmployee(String name, String middleName, String surname, List<String> emails, LocalDate dateOfBirth,
             Employee.Role role, String pesel, List<Restaurant> restaurant, double hourlyRate, int weeklyWorkingHours) {
         super(name, middleName, surname, emails, dateOfBirth, role, pesel, restaurant);
-        this.hourlyRate = hourlyRate;
-        this.weeklyWorkingHours = weeklyWorkingHours;
+        setHourlyRate(hourlyRate);
+        setWeeklyWorkingHours(weeklyWorkingHours);
 
         extent.add(this);
     }
 
     private PartTimeEmployee(Employee prevEmp, double hourlyRate, int weeklyWorkingHours) {
         super(prevEmp.name, prevEmp.middleName, prevEmp.surname, prevEmp.emails, prevEmp.dateOfBirth, prevEmp.role, prevEmp.peselNumber, prevEmp.worksInRestaurants);
-        this.hourlyRate = hourlyRate;
-        this.weeklyWorkingHours = weeklyWorkingHours;
+        setHourlyRate(hourlyRate);
+        setWeeklyWorkingHours(weeklyWorkingHours);
         
         Employee.removeFromExtent(prevEmp);
         FullTimeEmployee.removeFromFullTimeEmployeeExtent(prevEmp);
@@ -37,6 +37,9 @@ public class PartTimeEmployee extends Employee{
     }
 
     public void setHourlyRate(double hourlyRate) {
+        if (hourlyRate < 10.0) {
+            throw new IllegalArgumentException("Hourly rate cannot be lower than 10");
+        }
         this.hourlyRate = hourlyRate;
     }
 
@@ -45,6 +48,9 @@ public class PartTimeEmployee extends Employee{
     }
 
     public void setWeeklyWorkingHours(int weeklyWorkingHours) {
+        if (weeklyWorkingHours < 10) {
+            throw new IllegalArgumentException("Weekly working hours cannot be lower than 10");
+        }
         this.weeklyWorkingHours = weeklyWorkingHours;
     }
 
@@ -58,7 +64,7 @@ public class PartTimeEmployee extends Employee{
     }
 
     public static List<PartTimeEmployee> getPartTimeEmployeeExtent() {
-        return extent;
+        return List.copyOf(extent);
     }
 
     public static void showPartTimeEmployeeExtent(){

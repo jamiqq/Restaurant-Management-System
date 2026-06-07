@@ -237,7 +237,7 @@ public class Reservation implements Serializable{
     //EXTENT LOGIC
     public static void showExtent()  { extent.forEach(System.out::println); }
     public static void clearExtent() { extent.clear(); }
-    public static List<Reservation> getExtent() { return extent; }
+    public static List<Reservation> getExtent() { return List.copyOf(extent); }
 
     public static void writeExtent(ObjectOutputStream stream) throws IOException {
         stream.writeObject(extent);
@@ -258,6 +258,9 @@ public class Reservation implements Serializable{
     }
 
     public void setGuestName(String guestName) {
+        if (guestName == null || guestName.isBlank()) {
+            throw new IllegalArgumentException("Guest name cannot be empty");
+        }
         this.guestName = guestName;
     }
 
@@ -266,6 +269,9 @@ public class Reservation implements Serializable{
     }
 
     public void setGuestPhoneNumber(String guestPhoneNumber) {
+        if (guestPhoneNumber == null || guestPhoneNumber.isBlank()) {
+            throw new IllegalArgumentException("Phone number cannot be null");
+        }
         this.guestPhoneNumber = guestPhoneNumber;
     }
 
@@ -274,6 +280,9 @@ public class Reservation implements Serializable{
     }
 
     public void setDateTimeOfReservation(LocalDateTime dateTimeOfReservation) {
+        if (dateTimeOfReservation == null) {
+            throw new IllegalArgumentException("Date time of reservation cannot be null");
+        }
         this.dateTimeOfReservation = dateTimeOfReservation;
     }
 
@@ -288,10 +297,6 @@ public class Reservation implements Serializable{
 
     public Restaurant.Table getAssignedTable() {
         return assignedTable;
-    }
-
-    public void setAssignedTable(Restaurant.Table assignedTable) {
-        this.assignedTable = assignedTable;
     }
 
     public LocalDateTime getEndTime() {

@@ -18,7 +18,7 @@ public class FullTimeEmployee extends Employee{
     public FullTimeEmployee(String name, String middleName, String surname, List<String> emails, LocalDate dateOfBirth,
             Employee.Role role, String pesel, List<Restaurant> restaurant, FullTimeEmployee.Insurance insuranceType) {
         super(name, middleName, surname, emails, dateOfBirth, role, pesel, restaurant);
-        this.insuranceType = insuranceType;
+        setInsuranceType(insuranceType);
         usedVacationDays = 0;
 
         extent.add(this);
@@ -26,7 +26,7 @@ public class FullTimeEmployee extends Employee{
 
     private FullTimeEmployee(Employee prevEmp, FullTimeEmployee.Insurance insuranceType) {
         super(prevEmp.name, prevEmp.middleName, prevEmp.surname, prevEmp.emails, prevEmp.dateOfBirth, prevEmp.role, prevEmp.peselNumber, prevEmp.worksInRestaurants);
-        this.insuranceType = insuranceType;
+        setInsuranceType(insuranceType);
         usedVacationDays = 0;
 
         Employee.removeFromExtent(prevEmp);
@@ -43,6 +43,9 @@ public class FullTimeEmployee extends Employee{
     }
 
     public void setInsuranceType(Insurance insuranceType) {
+        if (insuranceType == null) {
+            throw new IllegalArgumentException("Insurance type cannot be null");
+        }
         this.insuranceType = insuranceType;
     }
 
@@ -59,10 +62,6 @@ public class FullTimeEmployee extends Employee{
         return super.getSalary() + (calculateUsedVacationDays() * 30.0);
     }
 
-    public static List<FullTimeEmployee> getFullTimeEmployeeExtent() {
-        return extent;
-    }
-
     public void useVacationDays(int days){
         if (calculateUsedVacationDays() + days > 28) {
             throw new IllegalStateException("Not possible to add vacation days. Vacation days left: " + calculateUsedVacationDays());
@@ -74,10 +73,10 @@ public class FullTimeEmployee extends Employee{
         return usedVacationDays;
     }
 
-    public void setUsedVacationDays(int usedVacationDays) {
-        this.usedVacationDays = usedVacationDays;
+     public static List<FullTimeEmployee> getFullTimeEmployeeExtent() {
+        return List.copyOf(extent);
     }
-    
+
     public static void showFullTimeEmployeeExtent(){
         extent.forEach(System.out::println);
     }

@@ -9,14 +9,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.function.Function;
 
-/**
- * Manage Reservation GUI — operates on domain extents and associations.
- */
+
 public class ManageReservationGUI extends JFrame {
 
-  // ------------------------------------------------------------------
-  // Palette
-  // ------------------------------------------------------------------
   static final Color BG = new Color(0x0f, 0x11, 0x17);
   static final Color SURFACE = new Color(0x18, 0x1c, 0x27);
   static final Color BORDER = new Color(0x2a, 0x2f, 0x3e);
@@ -28,9 +23,6 @@ public class ManageReservationGUI extends JFrame {
   static final Color TEXT = new Color(0xd4, 0xda, 0xf0);
   static final Color MUTED = new Color(0x6b, 0x73, 0x90);
 
-  // ------------------------------------------------------------------
-  // Fonts
-  // ------------------------------------------------------------------
   static final Font F_MONO_S = new Font("Monospaced", Font.PLAIN, 10);
   static final Font F_MONO_M = new Font("Monospaced", Font.BOLD, 12);
   static final Font F_SANS_M = new Font("SansSerif", Font.PLAIN, 13);
@@ -38,9 +30,6 @@ public class ManageReservationGUI extends JFrame {
 
   private static final DateTimeFormatter DT_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd  HH:mm");
 
-  // ------------------------------------------------------------------
-  // State
-  // ------------------------------------------------------------------
   private final CardLayout cards = new CardLayout();
   private final JPanel deck = new JPanel(cards);
   private final Employee currentEmployee;
@@ -48,9 +37,6 @@ public class ManageReservationGUI extends JFrame {
   private final Runnable onBackToList;
   private JSpinner prolongSpinner;
 
-  // ------------------------------------------------------------------
-  // Boot
-  // ------------------------------------------------------------------
   public ManageReservationGUI(Employee employee, Reservation reservation, Runnable onBackToList) {
     super("Pizza Restaurant Management System — Manage Reservation");
     this.currentEmployee = employee;
@@ -93,9 +79,6 @@ public class ManageReservationGUI extends JFrame {
     deck.repaint();
   }
 
-  // ------------------------------------------------------------------
-  // Screen registry
-  // ------------------------------------------------------------------
   private void addScreens() {
     deck.add(screenMain(), "main");
     deck.add(screenStopConfirm(), "stop_confirm");
@@ -114,10 +97,6 @@ public class ManageReservationGUI extends JFrame {
     deck.add(screenProlongReassign(), "prolong_reassign");
     deck.add(screenProlongNoEmp(), "prolong_noemp");
   }
-
-  // ==================================================================
-  // Domain actions
-  // ==================================================================
 
   private void persistExtents() {
     try {
@@ -192,10 +171,6 @@ public class ManageReservationGUI extends JFrame {
       JOptionPane.showMessageDialog(this, ex.getMessage(), "Prolong Failed", JOptionPane.ERROR_MESSAGE);
     }
   }
-
-  // ==================================================================
-  // SCREENS
-  // ==================================================================
 
   private JPanel screenMain() {
     JPanel root = root();
@@ -562,10 +537,6 @@ public class ManageReservationGUI extends JFrame {
     return root;
   }
 
-  // ==================================================================
-  // Reservation display helpers
-  // ==================================================================
-
   private String[][] reservationDetailRows(Reservation r, boolean highlightEnd) {
     String endTime = formatDateTime(r.getEndTime()) + (highlightEnd ? "  \u2191" : "");
     return new String[][] {
@@ -636,10 +607,6 @@ public class ManageReservationGUI extends JFrame {
     long current = Duration.between(r.getDateTimeOfReservation(), r.getEndTime()).toHours();
     return Math.max(0, Reservation.MAX_DURATION_HOURS - current);
   }
-
-  // ==================================================================
-  // Extent loading & startup selection
-  // ==================================================================
 
   private static final int DIALOG_CONFIRM = 0;
   private static final int DIALOG_CANCEL = 1;
@@ -775,9 +742,6 @@ public class ManageReservationGUI extends JFrame {
         SwingUtilities.invokeLater(() -> showReservationDialog(employee)));
   }
 
-  // ==================================================================
-  // COMPONENT HELPERS
-  // ==================================================================
 
   private JPanel root() {
     JPanel p = new JPanel();
@@ -1124,11 +1088,7 @@ public class ManageReservationGUI extends JFrame {
     }
   }
 
-  // ==================================================================
-  // Entry point
-  // ==================================================================
 
-  /** Start selection dialogs and open the GUI (extents must already be in memory). */
   public static void launch() {
     try {
       UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());

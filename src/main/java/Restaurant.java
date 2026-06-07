@@ -22,9 +22,9 @@ public class Restaurant implements Serializable{
     private Map<String, Employee> empQualifier = new TreeMap<>();
 
     public Restaurant(String streetName, int buildingNumber, Storage storage){
-        this.streetName = streetName;
-        this.buildingNumber = buildingNumber;
-        this.addStorage(storage);
+        setStreetName(streetName);
+        setBuildingNumber(buildingNumber);
+        setStorages(List.of(storage));
         extent.add(this);
     }
 
@@ -213,6 +213,9 @@ public class Restaurant implements Serializable{
     }
 
     public void setStreetName(String streetName) {
+        if (streetName == null || streetName.isBlank()) {
+            throw new IllegalArgumentException("Street name cannot be null");
+        }
         this.streetName = streetName;
     }
 
@@ -221,6 +224,9 @@ public class Restaurant implements Serializable{
     }
 
     public void setBuildingNumber(int buildingNumber) {
+        if (buildingNumber < 1) {
+            throw new IllegalArgumentException("Irrelevant building number: " + buildingNumber);
+        }
         this.buildingNumber = buildingNumber;
     }
 
@@ -229,6 +235,9 @@ public class Restaurant implements Serializable{
     }
 
     public void setStorages(List<Storage> storages) {
+        if (storages == null || storages.isEmpty()) {
+            throw new IllegalArgumentException("Storages cannot be empty");
+        }
         this.storages = storages;
     }
 
@@ -275,14 +284,14 @@ public class Restaurant implements Serializable{
         private int tableNumber;
         private String tableType;
         private List<Reservation> reservations = new ArrayList<>();
-        private final Location location;
+        private Location location;
         private Section section;
         private boolean hasSunshade;
 
         private Table(int tableNumber, String tableType, Location location, Section section, boolean hasSunshade) {
-            this.tableNumber = tableNumber;
-            this.tableType = tableType;
-            this.location = location;
+            setTableNumber(tableNumber);
+            setTableType(tableType);
+            setLocation(location);
             this.section = (location == Location.Inside) ? section : null;
             this.hasSunshade = (location == Location.Outside) && hasSunshade;
             extent.add(this);
@@ -359,6 +368,13 @@ public class Restaurant implements Serializable{
         public Location getLocation(){
             return this.location;
         }
+        
+        public void setLocation(Location location){
+            if (location == null) {
+                throw new IllegalArgumentException("Location cannot be null");
+            }
+            this.location = location;
+        }
 
         public Section getSection() throws Exception{
             if (this.location == Location.Inside) {
@@ -395,6 +411,9 @@ public class Restaurant implements Serializable{
         }
 
         public void setTableNumber(int tableNumber) {
+            if (tableNumber < 1) {
+                throw new IllegalArgumentException("Table number is irrelevant");
+            }
             this.tableNumber = tableNumber;
         }
 
@@ -403,13 +422,15 @@ public class Restaurant implements Serializable{
         }
 
         public void setTableType(String tableType) {
+            if (tableType == null || tableType.isBlank()) {
+                throw new IllegalArgumentException("Table type cannot be empty");
+            }
             this.tableType = tableType;
         }
 
         public List<Reservation> getReservations() {
             return reservations;
         }
-
 
         @Override
         public String toString() {
@@ -434,7 +455,7 @@ public class Restaurant implements Serializable{
 
             super(tableNumber, tableType, location, section, hasSunshade);
 
-            this.distanceToBar = distanceToBar;
+            setDistanceToBar(distanceToBar);
 
             extent.add(this);
         }
@@ -445,6 +466,9 @@ public class Restaurant implements Serializable{
         }
 
         public void setDistanceToBar(int distance){
+            if (distance < 0) {
+                throw new IllegalArgumentException("Distance is irrelevant");
+            }
             this.distanceToBar = distance;
         }
 
