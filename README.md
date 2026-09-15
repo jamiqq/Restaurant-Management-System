@@ -128,7 +128,3 @@ The test suite covers:
 - Employee active reservation count across lifecycle events
 
 ---
-
-## Author
-
-Tymofii Lysenko — s30879
