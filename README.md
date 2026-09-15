@@ -1,6 +1,6 @@
 # Pizza Restaurant Management System
 
-A Java-based restaurant management system built as a university diploma project. The system models the core domain of a multi-location pizza restaurant chain, covering restaurants, tables, employees, and reservations, with a Swing GUI for the Prolong Reservation use case.
+A Java-based restaurant management system. The system models the core domain of a multi-location pizza restaurant chain, covering restaurants, tables, employees, and reservations, with a Swing GUI for the Prolong Reservation use case.
 
 ---
 
