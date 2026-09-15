@@ -183,6 +183,9 @@ public abstract class Employee implements Serializable {
     }
 
     public static void removeFromExtent(Employee emp){
+        if(!emp.reservations.isEmpty()){
+            throw new IllegalStateException("Cannot remove an Employee with assigned Reservations");
+        }
         extent.remove(emp);
     }
 

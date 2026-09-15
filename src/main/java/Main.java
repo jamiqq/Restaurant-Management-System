@@ -1,4 +1,3 @@
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -386,5 +385,15 @@ public class Main {
                 false, false,
                 emp3_2.getPeselNumber());
 
-    }
+        Reservation changeTable = r1.reserveTable(
+                emp1_1,
+                r1_t3,
+                "Marta Nowak", "601222333",
+                LocalDateTime.of(2026, 6, 3, 22, 30),
+                true, false,
+                emp1_2.getPeselNumber());
+        res1_2.setOccasion(Reservation.Occasion.Birthday);
+        res1_2.setDecorationDescription("Balloon arch, gold theme");
+        
+        }
 }
