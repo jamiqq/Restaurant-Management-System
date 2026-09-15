@@ -1,4 +1,3 @@
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -8,34 +7,39 @@ public class PartTimeEmployee extends Employee{
     private static List<PartTimeEmployee> extent = new ArrayList<>();
 
     private double hourlyRate;
-
     private int weeklyWorkingHours;
 
     public PartTimeEmployee(String name, String middleName, String surname, List<String> emails, LocalDate dateOfBirth,
             Employee.Role role, String pesel, List<Restaurant> restaurant, double hourlyRate, int weeklyWorkingHours) {
         super(name, middleName, surname, emails, dateOfBirth, role, pesel, restaurant);
-        this.hourlyRate = hourlyRate;
-        this.weeklyWorkingHours = weeklyWorkingHours;
+        setHourlyRate(hourlyRate);
+        setWeeklyWorkingHours(weeklyWorkingHours);
 
         extent.add(this);
     }
 
-    public PartTimeEmployee(Employee prevEmp, double hourlyRate, int weeklyWorkingHours) {
+    private PartTimeEmployee(Employee prevEmp, double hourlyRate, int weeklyWorkingHours) {
         super(prevEmp.name, prevEmp.middleName, prevEmp.surname, prevEmp.emails, prevEmp.dateOfBirth, prevEmp.role, prevEmp.peselNumber, prevEmp.worksInRestaurants);
-        this.hourlyRate = hourlyRate;
-        this.weeklyWorkingHours = weeklyWorkingHours;
+        setHourlyRate(hourlyRate);
+        setWeeklyWorkingHours(weeklyWorkingHours);
         
         Employee.removeFromExtent(prevEmp);
         FullTimeEmployee.removeFromFullTimeEmployeeExtent(prevEmp);
         extent.add(this);
     }
 
+    public static PartTimeEmployee changeContractToPartTime(Employee prevEmployee, double hourlyRate, int weeklyWorkingHours){
+        return new PartTimeEmployee(prevEmployee, hourlyRate, weeklyWorkingHours);
+    }
 
     public double getHourlyRate() {
         return hourlyRate;
     }
 
     public void setHourlyRate(double hourlyRate) {
+        if (hourlyRate < 10.0) {
+            throw new IllegalArgumentException("Hourly rate cannot be lower than 10");
+        }
         this.hourlyRate = hourlyRate;
     }
 
@@ -44,6 +48,9 @@ public class PartTimeEmployee extends Employee{
     }
 
     public void setWeeklyWorkingHours(int weeklyWorkingHours) {
+        if (weeklyWorkingHours < 10) {
+            throw new IllegalArgumentException("Weekly working hours cannot be lower than 10");
+        }
         this.weeklyWorkingHours = weeklyWorkingHours;
     }
 
@@ -57,7 +64,7 @@ public class PartTimeEmployee extends Employee{
     }
 
     public static List<PartTimeEmployee> getPartTimeEmployeeExtent() {
-        return extent;
+        return List.copyOf(extent);
     }
 
     public static void showPartTimeEmployeeExtent(){
@@ -74,6 +81,8 @@ public class PartTimeEmployee extends Employee{
 
     @Override
     public String toString(){
-        return super.toString() +  ", hourlyRate=" + hourlyRate + ", weeklyWorkingHours" + weeklyWorkingHours + " ]";
+        return super.toString() 
+            +  ", hourlyRate=" + hourlyRate 
+            + ", weeklyWorkingHours" + weeklyWorkingHours + " ]";
     }
 }

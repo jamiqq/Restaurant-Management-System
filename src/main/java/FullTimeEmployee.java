@@ -1,4 +1,3 @@
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,25 +11,22 @@ public class FullTimeEmployee extends Employee{
     }
 
     private static List<FullTimeEmployee> extent = new ArrayList<>();
-
     private Insurance insuranceType;
-
     private static int paidVacationDays = 28;
-
     private int usedVacationDays;
 
     public FullTimeEmployee(String name, String middleName, String surname, List<String> emails, LocalDate dateOfBirth,
             Employee.Role role, String pesel, List<Restaurant> restaurant, FullTimeEmployee.Insurance insuranceType) {
         super(name, middleName, surname, emails, dateOfBirth, role, pesel, restaurant);
-        this.insuranceType = insuranceType;
+        setInsuranceType(insuranceType);
         usedVacationDays = 0;
 
         extent.add(this);
     }
 
-    public FullTimeEmployee(Employee prevEmp, FullTimeEmployee.Insurance insuranceType) {
+    private FullTimeEmployee(Employee prevEmp, FullTimeEmployee.Insurance insuranceType) {
         super(prevEmp.name, prevEmp.middleName, prevEmp.surname, prevEmp.emails, prevEmp.dateOfBirth, prevEmp.role, prevEmp.peselNumber, prevEmp.worksInRestaurants);
-        this.insuranceType = insuranceType;
+        setInsuranceType(insuranceType);
         usedVacationDays = 0;
 
         Employee.removeFromExtent(prevEmp);
@@ -38,11 +34,18 @@ public class FullTimeEmployee extends Employee{
         extent.add(this);
     }
 
+    public static FullTimeEmployee changeContractToFullTime(Employee prevEmp, FullTimeEmployee.Insurance insurance){
+        return new FullTimeEmployee(prevEmp, insurance);
+    }
+    
     public Insurance getInsuranceType() {
         return insuranceType;
     }
 
     public void setInsuranceType(Insurance insuranceType) {
+        if (insuranceType == null) {
+            throw new IllegalArgumentException("Insurance type cannot be null");
+        }
         this.insuranceType = insuranceType;
     }
 
@@ -59,18 +62,21 @@ public class FullTimeEmployee extends Employee{
         return super.getSalary() + (calculateUsedVacationDays() * 30.0);
     }
 
-    public static List<FullTimeEmployee> getFullTimeEmployeeExtent() {
-        return extent;
+    public void useVacationDays(int days){
+        if (calculateUsedVacationDays() + days > 28) {
+            throw new IllegalStateException("Not possible to add vacation days. Vacation days left: " + calculateUsedVacationDays());
+        }
+        usedVacationDays =+ usedVacationDays + days;
     }
-    
+
     public int getUsedVacationDays() {
         return usedVacationDays;
     }
 
-    public void setUsedVacationDays(int usedVacationDays) {
-        this.usedVacationDays = usedVacationDays;
+     public static List<FullTimeEmployee> getFullTimeEmployeeExtent() {
+        return List.copyOf(extent);
     }
-    
+
     public static void showFullTimeEmployeeExtent(){
         extent.forEach(System.out::println);
     }
@@ -85,6 +91,8 @@ public class FullTimeEmployee extends Employee{
 
     @Override
     public String toString(){
-        return super.toString() + ", insuranceType=" + insuranceType + ", usedVacationDays=" + usedVacationDays + " ]";
+        return super.toString() + 
+            ", insuranceType=" + insuranceType + 
+            ", usedVacationDays=" + usedVacationDays + " ]";
     }
 }

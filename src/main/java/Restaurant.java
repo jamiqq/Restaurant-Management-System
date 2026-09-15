@@ -1,11 +1,9 @@
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -19,20 +17,18 @@ public class Restaurant implements Serializable{
 
     private String streetName;
     private int buildingNumber;
-
     private List<Storage> storages = new ArrayList<>();
-
     private Set<Table> tables = new HashSet<>();
-
     private Map<String, Employee> empQualifier = new TreeMap<>();
 
     public Restaurant(String streetName, int buildingNumber, Storage storage){
-        this.streetName = streetName;
-        this.buildingNumber = buildingNumber;
-        this.addStorage(storage);
+        setStreetName(streetName);
+        setBuildingNumber(buildingNumber);
+        setStorages(List.of(storage));
         extent.add(this);
     }
 
+    // EMPLOYEE ASSOCIATION LOGIC
     public void addEmpQualifier(Employee emp){
         if (!empQualifier.containsKey(emp.getPeselNumber())) {
             empQualifier.put(emp.getPeselNumber(), emp);
@@ -57,6 +53,7 @@ public class Restaurant implements Serializable{
         return empQualifier.get(pesel);
     }
 
+    // STORAGE ASSOCIATION LOGIC
     public void addStorage(Storage newStorage){
         if(!storages.contains(newStorage)){
             storages.add(newStorage);
@@ -75,6 +72,19 @@ public class Restaurant implements Serializable{
             }
         }
     }
+
+    // EXTENT LOGIC 
+
+    public static void writeExtent(ObjectOutputStream stream) throws IOException{
+        stream.writeObject(extent);
+    }
+
+    public static void readExtent(ObjectInputStream stream) throws IOException, ClassNotFoundException{
+        Object object = stream.readObject();
+        if (object instanceof List<?>) {
+            extent = new ArrayList<>((List<Restaurant>) object);
+        }else throw new IOException("Unable to read from extent");
+    }
     public static void showExtent(){
         extent.forEach(System.out::println);
     }
@@ -83,93 +93,54 @@ public class Restaurant implements Serializable{
         extent.clear();
     }
     
-    @Override
-    public String toString() {
-        String info = "Restaurant [streetName=" + streetName + ", buildingNumber=" + buildingNumber + ", " + "employees=" + empQualifier.keySet() + " storages=";
-        if (storages.isEmpty()) {
-            info += "[]]";
-        }else{
-            for(Storage s : storages){
-                info += s.getStreetName() + "," + s.getBuildingNumber() + "; ";
-            }
-            info += ", tables=";
-        }
-        if(tables.isEmpty()){
-            info += "[]]";
-        }else{
-            for(Restaurant.Table t : tables){
-                info += t.getTableNumber() + ", ";
-            }
-            info += "]";
-        }
-        return info;
-    }
 
-    public static List<Restaurant> getExtent() {
-        return extent;
-    }
-
-    public String getStreetName() {
-        return streetName;
-    }
-
-    public void setStreetName(String streetName) {
-        this.streetName = streetName;
-    }
-
-    public int getBuildingNumber() {
-        return buildingNumber;
-    }
-
-    public void setBuildingNumber(int buildingNumber) {
-        this.buildingNumber = buildingNumber;
-    }
-
-    public List<Storage> getStorages() {
-        return storages;
-    }
-
-    public void setStorages(List<Storage> storages) {
-        this.storages = storages;
-    }
-
-    public Map<String, Employee> getEmpQualifier() {
-        return empQualifier;
-    }
-
-    public Set<Table> getTables() {
-        return tables;
-    }
+    // RESERVATION LOGIC 
 
     public Reservation reserveTable(
-            int tableNumber,
+            Employee createdBy,
+            Restaurant.Table table,
             String guestName,
             String guestPhoneNumber,
             LocalDateTime dateTime,
             boolean isCelebration,
-            boolean isPrivate) throws Exception{
+            boolean isPrivate,
+            String employeePesel) throws Exception {
         
-        Restaurant.Table table = tables.stream()
-                .filter(t -> t.getTableNumber() == tableNumber && !t.isReservedAt(dateTime))
+        if (!empQualifier.containsKey(createdBy.getPeselNumber())) {
+            throw new IllegalArgumentException("Provided Manager doesn't belong to desired restaurant.");
+        }
+        if (!empQualifier.containsKey(employeePesel)) {
+            throw new IllegalArgumentException("Assigned Employee doesn't belong to desired restaurant.");
+        }
+        if (!tables.contains(table)) {
+            throw new IllegalArgumentException("Assigned table doesn't belong to desired restaurant.");
+        }
+        if (createdBy == null || createdBy.role != Employee.Role.Manager) {
+            throw new IllegalArgumentException("Only manager can reserve tables.");
+        }
+        Restaurant.Table desiredTable = tables.stream()
+                .filter(t -> t.getTableNumber() == table.getTableNumber() && !t.isReservedAt(dateTime))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException(
-                    "Table " + tableNumber + " is either not found or already reserved for that time slot."));
+                        "Table " + table.getTableNumber() + " is either not found or already reserved for that time slot."));
 
-        Employee assignedEmp = empQualifier.values().stream()
-                .filter(e -> e.getRole() == Employee.Role.Waiter || e.getRole() == Employee.Role.Intern)
-                .min(Comparator.comparingLong(Employee::getActiveReservationCount))
-                .orElseThrow(() -> new IllegalStateException(
-                    "No eligible employee (Waiter or Intern) available in this restaurant."));
+        Employee assignedEmp = findEmployeeByPeselNumber(employeePesel);
 
-        return new Reservation(guestName, guestPhoneNumber, dateTime, assignedEmp, table, isCelebration, isPrivate);
+        if (!Employee.canBeAssignedToReservation(assignedEmp)) {
+            throw new IllegalArgumentException(
+                    "Employee " + employeePesel + " is not a Waiter or Intern.");
+        }
+
+        return Reservation.makeReservation(createdBy, guestName, guestPhoneNumber, dateTime, assignedEmp, desiredTable,
+                isCelebration, isPrivate);
     }
 
     public List<Restaurant.Table> findAvailableTables(LocalDateTime time){
-        return tables.stream()
-            .filter(t -> !t.isReservedAt(time))
-            .toList();
+        return tables.stream().filter(t -> !t.isReservedAt(time)).toList();
     }
 
+    
+    // TABLE ADDING LOGIC
     public BarTable addBarTable(int tableNumber, String tableType, Table.Location location, Table.Section section, boolean hasSunshade, int distance) throws Exception{
         if (location == Table.Location.Inside) {
             BarTable table = new BarTable(tableNumber, tableType, location, section,  false, distance);
@@ -205,7 +176,10 @@ public class Restaurant implements Serializable{
             return table;
         }else throw new Exception("Something went wrong");
     }
-    
+
+
+    // AUXILIARY METHODS 
+
     public static void removeRestaurant(Restaurant restaurant){
         if(!extent.contains(restaurant)){
             throw new IllegalArgumentException("Unable to find a restaurant...");
@@ -227,14 +201,76 @@ public class Restaurant implements Serializable{
         Restaurant.Table.clearExtent();
     }
 
-    public static void writeExtent(ObjectOutputStream stream) throws IOException{
-        stream.writeObject(extent);
+    
+    // GETTERS AND SETTERS
+
+    public static List<Restaurant> getExtent() {
+        return extent;
     }
-    public static void readExtent(ObjectInputStream stream) throws IOException, ClassNotFoundException{
-        Object object = stream.readObject();
-        if (object instanceof List<?>) {
-            extent = new ArrayList<>((List<Restaurant>) object);
-        }else throw new IOException("Unable to read from extent");
+
+    public String getStreetName() {
+        return streetName;
+    }
+
+    public void setStreetName(String streetName) {
+        if (streetName == null || streetName.isBlank()) {
+            throw new IllegalArgumentException("Street name cannot be null");
+        }
+        this.streetName = streetName;
+    }
+
+    public int getBuildingNumber() {
+        return buildingNumber;
+    }
+
+    public void setBuildingNumber(int buildingNumber) {
+        if (buildingNumber < 1) {
+            throw new IllegalArgumentException("Irrelevant building number: " + buildingNumber);
+        }
+        this.buildingNumber = buildingNumber;
+    }
+
+    public List<Storage> getStorages() {
+        return storages;
+    }
+
+    public void setStorages(List<Storage> storages) {
+        if (storages == null || storages.isEmpty()) {
+            throw new IllegalArgumentException("Storages cannot be empty");
+        }
+        this.storages = storages;
+    }
+
+    public Map<String, Employee> getEmpQualifier() {
+        return empQualifier;
+    }
+
+    public Set<Table> getTables() {
+        return tables;
+    }
+
+     @Override
+    public String toString() {
+        String info = "Restaurant [streetName=" + streetName 
+                                + ", buildingNumber=" + buildingNumber 
+                                + ", " + "employees=" + empQualifier.keySet() + " storages=";
+        if (storages.isEmpty()) {
+            info += "[]]";
+        }else{
+            for(Storage s : storages){
+                info += s.getStreetName() + "," + s.getBuildingNumber() + "; ";
+            }
+            info += ", tables=";
+        }
+        if(tables.isEmpty()){
+            info += "[]]";
+        }else{
+            for(Restaurant.Table t : tables){
+                info += t.getTableNumber() + ", ";
+            }
+            info += "]";
+        }
+        return info;
     }
 
     public abstract class Table implements Serializable{
@@ -247,26 +283,40 @@ public class Restaurant implements Serializable{
 
         private int tableNumber;
         private String tableType;
-
         private List<Reservation> reservations = new ArrayList<>();
-
-        private final Location location;
-
+        private Location location;
         private Section section;
-
         private boolean hasSunshade;
 
         private Table(int tableNumber, String tableType, Location location, Section section, boolean hasSunshade) {
-            this.tableNumber = tableNumber;
-            this.tableType = tableType;
-            this.location = location;
+            setTableNumber(tableNumber);
+            setTableType(tableType);
+            setLocation(location);
             this.section = (location == Location.Inside) ? section : null;
             this.hasSunshade = (location == Location.Outside) && hasSunshade;
             extent.add(this);
         }
 
+
+        // RESERVATION LOGIC
+
+        void addReservation(Reservation newReservation){
+            if (isReservedAt(newReservation.getDateTimeOfReservation())) {
+               throw new IllegalStateException(
+                    "Table " + tableNumber + " is already reserved for the requested time slot"
+               );
+            }
+            if (!reservations.contains(newReservation)) {
+                reservations.add(newReservation);
+            }
+        }
+
+        void removeReservation(Reservation reservation){
+            reservations.remove(reservation);
+        }
+
         public boolean isReservedAt(LocalDateTime requestedStart){
-            LocalDateTime requestedEnd = requestedStart.plusHours(Reservation.durationHours);
+            LocalDateTime requestedEnd = requestedStart.plusHours(Reservation.DURATION_HOURS);
             return reservations.stream()
                 .filter(Reservation::isActive)
                 .anyMatch(r -> {
@@ -276,8 +326,54 @@ public class Restaurant implements Serializable{
                 });
         }
 
+        public boolean isReservedAtExcluding(LocalDateTime requestedStart, Reservation exclude){
+            LocalDateTime requestedEnd = requestedStart.plusHours(Reservation.DURATION_HOURS);
+            return reservations.stream()
+                                .filter(Reservation::isActive)
+                                .filter(r -> !r.equals(exclude))
+                                .anyMatch(r -> {
+                                    LocalDateTime existingStart = r.getDateTimeOfReservation();
+                                    LocalDateTime existingEnd = r.getEndTime();
+                                    return requestedStart.isBefore(existingEnd) && requestedEnd.isAfter(existingStart);
+                                });
+        }
+
+        // EXTENT LOGIC
+
+        public static void writeExtent(ObjectOutputStream stream) throws IOException{
+            stream.writeObject(extent);
+        }
+
+        public static void readExtent(ObjectInputStream stream) throws IOException, ClassNotFoundException{
+            Object object = stream.readObject();
+            if (object instanceof List<?>) {
+                extent = new ArrayList<>((List<Table>) object);
+            }else throw new IOException("Unable to read from extent");
+        }
+
+         public static void showExtent(){
+            extent.forEach(System.out::println);
+        }
+
+        public static void clearExtent(){
+           extent.clear();
+        }
+
+        public static List<Table> getExtent() {
+            return extent;
+        }
+
+
+        // GETTERS AND SETTERS 
         public Location getLocation(){
             return this.location;
+        }
+        
+        public void setLocation(Location location){
+            if (location == null) {
+                throw new IllegalArgumentException("Location cannot be null");
+            }
+            this.location = location;
         }
 
         public Section getSection() throws Exception{
@@ -310,38 +406,14 @@ public class Restaurant implements Serializable{
             return Restaurant.this;
         }
         
-        void addReservation(Reservation newReservation){
-            if (isReservedAt(newReservation.getDateTimeOfReservation())) {
-               throw new IllegalStateException(
-                    "Table " + tableNumber + " is already reserved for the requested time slot"
-               );
-            }
-            if (!reservations.contains(newReservation)) {
-                reservations.add(newReservation);
-            }
-        }
-
-        void removeReservation(Reservation reservation){
-            reservations.remove(reservation);
-        }
-
-        public static void showExtent(){
-            extent.forEach(System.out::println);
-        }
-
-        public static void clearExtent(){
-           extent.clear();
-        }
-
-        public static List<Table> getExtent() {
-            return extent;
-        }
-
         public int getTableNumber() {
             return tableNumber;
         }
 
         public void setTableNumber(int tableNumber) {
+            if (tableNumber < 1) {
+                throw new IllegalArgumentException("Table number is irrelevant");
+            }
             this.tableNumber = tableNumber;
         }
 
@@ -350,6 +422,9 @@ public class Restaurant implements Serializable{
         }
 
         public void setTableType(String tableType) {
+            if (tableType == null || tableType.isBlank()) {
+                throw new IllegalArgumentException("Table type cannot be empty");
+            }
             this.tableType = tableType;
         }
 
@@ -357,22 +432,11 @@ public class Restaurant implements Serializable{
             return reservations;
         }
 
-
         @Override
         public String toString() {
-            return "Table [tableNumber=" + tableNumber + ", tableType=" + tableType + ", reservations=" + reservations
-                    + "]";
-        }
-
-        public static void writeExtent(ObjectOutputStream stream) throws IOException{
-            stream.writeObject(extent);
-        }
-
-        public static void readExtent(ObjectInputStream stream) throws IOException, ClassNotFoundException{
-            Object object = stream.readObject();
-            if (object instanceof List<?>) {
-                extent = new ArrayList<>((List<Table>) object);
-            }else throw new IOException("Unable to read from extent");
+            return "Table [tableNumber=" + tableNumber 
+            + ", tableType=" + tableType 
+            + ", reservations=" + reservations + "]";
         }
     }
 
@@ -382,21 +446,33 @@ public class Restaurant implements Serializable{
 
         private int distanceToBar;
 
-        private BarTable(int tableNumber, String tableType, Location location, Section section, boolean hasSunshade, int distanceToBar){
-        super(tableNumber, tableType, location, section, hasSunshade);
+        private BarTable(int tableNumber, 
+                         String tableType, 
+                         Location location, 
+                         Section section, 
+                         boolean hasSunshade, 
+                         int distanceToBar){
 
-        this.distanceToBar = distanceToBar;
+            super(tableNumber, tableType, location, section, hasSunshade);
 
-        extent.add(this);
+            setDistanceToBar(distanceToBar);
+
+            extent.add(this);
         }
 
+        // GETTERS AND SETTERS 
         public int getDistanceToBar(){
             return distanceToBar;
         }
 
         public void setDistanceToBar(int distance){
+            if (distance < 0) {
+                throw new IllegalArgumentException("Distance is irrelevant");
+            }
             this.distanceToBar = distance;
         }
+
+        // EXTENT LOGIC
 
         public static List<BarTable> getBarTableExtent(){
             return List.copyOf(extent);
@@ -422,27 +498,25 @@ public class Restaurant implements Serializable{
         private static List<FamilyTable> extent = new ArrayList<>();
 
         private boolean isExtendable;
+        private boolean hasInfantChair;
 
-        private boolean hasKidChair;
+        private FamilyTable(int tableNumber, 
+                    String tableType, 
+                    Location location, 
+                    Section section, 
+                    boolean hasSunshade, 
+                    boolean isExtendable,
+                    boolean hasKidChair){
 
-        private FamilyTable(int tableNumber, String tableType, Location location, Section section, boolean hasSunshade, boolean isExtendable, boolean hasKidChair){
-        super(tableNumber, tableType, location, section, hasSunshade);
+            super(tableNumber, tableType, location, section, hasSunshade);
 
-        this.isExtendable = isExtendable;
-        this.hasKidChair = hasKidChair;
-
-        extent.add(this);
-        }
-
-        @Override
-        public boolean getIsExtendable(){
-            return isExtendable;
-        }
-        @Override
-        public void setIsExtendable(boolean isExtendable) {
             this.isExtendable = isExtendable;
+            this.hasInfantChair = hasKidChair;
+
+            extent.add(this);
         }
 
+        // EXTENT LOGIC
         public static List<FamilyTable> getFamilyTableExtent() {
             return List.copyOf(extent);
         }
@@ -455,14 +529,24 @@ public class Restaurant implements Serializable{
             extent.clear();
         }
 
+        // GETTERS AND SETTERS
         @Override
-        public boolean getHasKidChair() {
-            return hasKidChair;
+        public boolean getIsExtendable(){
+            return isExtendable;
+        }
+        @Override
+        public void setIsExtendable(boolean isExtendable) {
+            this.isExtendable = isExtendable;
         }
 
         @Override
-        public void setHasKidChair(boolean hasKidChair) {
-            this.hasKidChair = hasKidChair;
+        public boolean getHasInfantChair() {
+            return hasInfantChair;
+        }
+
+        @Override
+        public void setHasInfantChair(boolean hasInfantChair) {
+            this.hasInfantChair = hasInfantChair;
         }
 
         @Override
@@ -484,7 +568,7 @@ public class Restaurant implements Serializable{
 
         @Override
         public String toString() {
-            return "FamilyTable [" + super.toString() + ", isExtendable=" + isExtendable + ", hasKidChair=" + hasKidChair + "]";
+            return "FamilyTable [" + super.toString() + ", isExtendable=" + isExtendable + ", hasKidChair=" + hasInfantChair + "]";
         }
     }
 
@@ -493,16 +577,27 @@ public class Restaurant implements Serializable{
         private static List<FamilyBarTable> extent = new ArrayList<>();
 
         private boolean isExtendable;
-        private boolean hasKidChair;
+        private boolean hasInfantChair;
 
-        public FamilyBarTable(int tableNumber, String tableType, Location location, Section section, boolean hasSunshade, int distance, boolean isExtendable, boolean hasKidChair){
+        public FamilyBarTable(int tableNumber, 
+                String tableType,
+                Location location, 
+                Section section, 
+                boolean hasSunshade, 
+                int distance, 
+                boolean isExtendable, 
+                boolean hasInfantChair){
+
             super(tableNumber, tableType, location, section, hasSunshade, distance);
             this.isExtendable = isExtendable;
-            this.hasKidChair = hasKidChair;
+            this.hasInfantChair = hasInfantChair;
 
             extent.add(this);
         }
 
+
+        // GETTERS AND SETTERS
+        
         public static List<FamilyBarTable> getFamilyBarTableExtent() {
             return List.copyOf(extent);
         }
@@ -518,13 +613,13 @@ public class Restaurant implements Serializable{
         }
 
         @Override
-        public boolean getHasKidChair() {
-            return hasKidChair;
+        public boolean getHasInfantChair() {
+            return hasInfantChair;
         }
         
         @Override
-        public void setHasKidChair(boolean hasKidChair) {
-            this.hasKidChair = hasKidChair;
+        public void setHasInfantChair(boolean hasKidChair) {
+            this.hasInfantChair = hasKidChair;
         }
 
         @Override
@@ -546,7 +641,7 @@ public class Restaurant implements Serializable{
 
         @Override
         public String toString() {
-            return "FamilyBarTable [" + super.toString() + ", isExtendable=" + isExtendable + ", hasKidChair=" + hasKidChair + "]";
+            return "FamilyBarTable [" + super.toString() + ", isExtendable=" + isExtendable + ", hasKidChair=" + hasInfantChair + "]";
         }
     }
 }

@@ -1,10 +1,10 @@
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -14,31 +14,50 @@ public class Reservation implements Serializable{
 
     public enum Occasion {Birthday, Wedding, Corporate, Custom};
 
-    protected static final int durationHours = 2;
+    public static final int DURATION_HOURS = 2;
+    public static final int MAX_DURATION_HOURS = 6;
+    public static final int WAITING_PERIOD = 15;
+    public static final int MAX_ACTIVE_PER_EMP = 5;
     
     private static List<Reservation> extent = new ArrayList<>();
 
     private String guestName;
     private String guestPhoneNumber;
     private LocalDateTime dateTimeOfReservation;
-
+    private LocalDateTime endTime;
     private Employee assignedEmployee;
     private Restaurant.Table assignedTable;
-
     private Occasion occasion;
     private String decorationDescription;
-
     private static double minimumSpend = 800;
     private boolean securityRequired;
-
     private boolean active = true;
 
     private EnumSet<ReservationType> reservationType = EnumSet.of(ReservationType.Reservation);
+    
+    public static Reservation makeReservation(Employee createdBy, String guestName, String guestPhoneNumber, LocalDateTime dateTime, Employee assignedEmployee, Restaurant.Table table, boolean isCelebration, boolean isPrivate){
+        if (createdBy == null || createdBy.getRole() != Employee.Role.Manager) {
+            throw new IllegalArgumentException("Only a Manager may create a reservation.");
+        }
+        if (guestName == null || guestName.isBlank()) {
+            throw new IllegalArgumentException("Guest name cannot be blank.");
+        }
+        if (guestPhoneNumber == null || guestPhoneNumber.isBlank()) {
+            throw new IllegalArgumentException("Guest phone number cannot be blank.");
+        }
+        if (dateTime == null) {
+            throw new IllegalArgumentException("Reservation date time cannot be null.");
+        }
+        Employee.requireAssignableToReservation(assignedEmployee);
 
-    public Reservation(String name, String number, LocalDateTime time, Employee emp, Restaurant.Table table, boolean isCelebration, boolean isPrivate){
+        return new Reservation(guestName, guestPhoneNumber, dateTime, assignedEmployee, table, isCelebration, isPrivate);
+    }
+
+    private Reservation(String name, String number, LocalDateTime time, Employee emp, Restaurant.Table table, boolean isCelebration, boolean isPrivate){
         this.guestName = name;
         this.guestPhoneNumber = number;
         this.dateTimeOfReservation = time;
+        this.endTime = dateTimeOfReservation.plusHours(DURATION_HOURS);
         assignEmployee(emp);
         assignTable(table);
 
@@ -52,9 +71,81 @@ public class Reservation implements Serializable{
         extent.add(this);
     }
 
+
+    // RESERVATION LIFECYCLE LOGIC 
     public void cancel(){
-        if (!active) {
-            throw new IllegalStateException("Reservation is already inactive.");
+        assertActive();
+        this.active = false;
+        extent.remove(this);
+        assignedEmployee.removeReservation(this);
+        assignedTable.removeReservation(this);
+    }
+
+    public void stopReservation(Employee emp){
+        assertActive();
+        assertAssignedEmployee(emp);
+        this.active = false;
+    }
+
+
+    public void prolongReservation(Employee emp, int extraHours){
+        assertActive();
+        assertAssignedEmployee(emp);
+
+        if(extraHours <= 0){
+            throw new IllegalArgumentException("Extension must be at least 1 hour.");
+        }
+
+        long currentDuration = java.time.Duration.between(dateTimeOfReservation, endTime).toHours();
+
+        if (currentDuration + extraHours > MAX_DURATION_HOURS) {
+            throw new IllegalStateException("Cannot extend: total duration would exceed " + MAX_DURATION_HOURS + " hours. " + "Remaining available time: " + (MAX_DURATION_HOURS - currentDuration) + " hours.");
+        }
+
+        LocalDateTime newEndDateTime = endTime.plusHours(extraHours);
+
+        boolean tableConflict = assignedTable.isReservedAtExcluding(endTime, this);
+
+        if (tableConflict) {
+            Restaurant.Table swapTable = assignedTable.getRestaurant().findAvailableTables(endTime)
+                                         .stream()
+                                        .filter(t -> !t.equals(assignedTable))
+                                        .findFirst()
+                                        .orElseThrow(() -> new IllegalStateException("Cannot extend: table " + assignedTable.getTableNumber() + " is already booked and no other table is available."));
+            
+            assignedTable.removeReservation(this);
+            swapTable.addReservation(this);
+            assignedTable = swapTable;
+
+            System.out.println("Table conflict - reservation moved to table " + assignedTable.getTableNumber());
+        }
+
+        if (assignedEmployee.getActiveReservationCount() >= MAX_ACTIVE_PER_EMP) {
+            Employee newEmp = assignedTable.getRestaurant()
+                              .getEmpQualifier().values().stream()
+                              .filter(e -> Employee.canBeAssignedToReservation(e) && !e.equals(assignedEmployee))
+                            .min(Comparator.comparingLong(Employee::getActiveReservationCount))
+                            .orElseThrow(() -> new IllegalStateException("Cannot extend: assigned Employee is overloaded and no other eligible employee is available."));
+            
+            System.out.println("Employee overloaded - reassigning from " + assignedEmployee.getName() + "[" + assignedEmployee.getPeselNumber() + "]" + " to " + newEmp.getName() + "[" + newEmp.getPeselNumber() + "].");
+            
+            assignedEmployee.removeReservation(this);
+            newEmp.addReservation(this);
+            assignedEmployee = newEmp;
+        }
+        this.endTime = newEndDateTime;
+
+        System.out.println("Reservation for " + guestName + " extended to " + endTime);
+    }
+
+    public void cancelNoGuest(Employee emp, LocalDateTime now){
+        assertActive();
+        assertAssignedEmployee(emp);
+
+        LocalDateTime waitingExpiry = dateTimeOfReservation.plusMinutes(WAITING_PERIOD);
+
+        if (now.isBefore(waitingExpiry)) {
+            throw new IllegalStateException("Cannot cancel for no-Guest yet. Waiting period expires at " + waitingExpiry);
         }
         this.active = false;
         extent.remove(this);
@@ -62,13 +153,7 @@ public class Reservation implements Serializable{
         assignedTable.removeReservation(this);
     }
 
-    public void stopReservation(){
-        if (!active) {
-            throw new IllegalStateException("Reservation is already inactive.");
-        }
-        this.active = false;
-    }
-
+    // OVERLAPPING FIELDS GETTERS AND SETTERS
     public Occasion hasOccasion() throws Exception{
         if (reservationType.contains(ReservationType.CelebrationReservation)) {
             return occasion;
@@ -115,12 +200,27 @@ public class Reservation implements Serializable{
         }else throw new Exception("The reservation is not Private");
     }
 
+    
+    // AUXILIARY FUNCTIONS
+
+    private void assertActive(){
+        if (!active) {
+            throw new IllegalStateException("Reservation is already inactive.");
+        }
+    }
+
+    private void assertAssignedEmployee(Employee emp){
+        if (!emp.equals(assignedEmployee)) {
+            throw new IllegalArgumentException("Only assigned employee can act on this reservation");
+        }
+    }
     private void assignEmployee(Employee emp){
         if(emp == null){
             throw new IllegalArgumentException("Assigned employee can't be null");
         }
-        if (emp.role != Employee.Role.Waiter && emp.role != Employee.Role.Intern) {
-            throw new IllegalArgumentException("Assigned employee must be a Waiter or an Intern.");
+        Employee.requireAssignableToReservation(emp);
+        if (emp.getActiveReservationCount() >= MAX_ACTIVE_PER_EMP) {
+            throw new IllegalStateException("An employee has reached the max amount of active reservations. Select another employee.");
         }
         assignedEmployee = emp;
         assignedEmployee.addReservation(this);
@@ -134,34 +234,33 @@ public class Reservation implements Serializable{
         assignedTable.addReservation(this);
     }
 
-    public LocalDateTime getEndTime(){
-        return dateTimeOfReservation.plusHours(durationHours);
+    //EXTENT LOGIC
+    public static void showExtent()  { extent.forEach(System.out::println); }
+    public static void clearExtent() { extent.clear(); }
+    public static List<Reservation> getExtent() { return List.copyOf(extent); }
+
+    public static void writeExtent(ObjectOutputStream stream) throws IOException {
+        stream.writeObject(extent);
     }
 
-    public boolean isActive(){
-        return active;
-    }
-    public String getShortInfo(){
-        return getGuestName() + ", at " + getDateTimeOfReservation() + " at Table number: " + getAssignedTable().getTableNumber() + ". Employee -> " + getAssignedEmployee().getName() + " " + getAssignedEmployee().getSurname();
-    }
-
-    public static void showExtent(){
-        extent.forEach(System.out::println);
+    public static void readExtent(ObjectInputStream stream)
+            throws IOException, ClassNotFoundException {
+        Object object = stream.readObject();
+        if (object instanceof List<?>) {
+            extent = new ArrayList<>((List<Reservation>) object);
+        } else throw new IOException("Unable to read from extent.");
     }
 
-    public static void clearExtent(){
-        extent.clear();
-    }
-
-    public static List<Reservation> getExtent() {
-        return extent;
-    }
+    // GETTERS AND SETTERS
 
     public String getGuestName() {
         return guestName;
     }
 
     public void setGuestName(String guestName) {
+        if (guestName == null || guestName.isBlank()) {
+            throw new IllegalArgumentException("Guest name cannot be empty");
+        }
         this.guestName = guestName;
     }
 
@@ -170,6 +269,9 @@ public class Reservation implements Serializable{
     }
 
     public void setGuestPhoneNumber(String guestPhoneNumber) {
+        if (guestPhoneNumber == null || guestPhoneNumber.isBlank()) {
+            throw new IllegalArgumentException("Phone number cannot be null");
+        }
         this.guestPhoneNumber = guestPhoneNumber;
     }
 
@@ -178,6 +280,9 @@ public class Reservation implements Serializable{
     }
 
     public void setDateTimeOfReservation(LocalDateTime dateTimeOfReservation) {
+        if (dateTimeOfReservation == null) {
+            throw new IllegalArgumentException("Date time of reservation cannot be null");
+        }
         this.dateTimeOfReservation = dateTimeOfReservation;
     }
 
@@ -186,6 +291,7 @@ public class Reservation implements Serializable{
     }
 
     public void setAssignedEmployee(Employee assignedEmployee) {
+        Employee.requireAssignableToReservation(assignedEmployee);
         this.assignedEmployee = assignedEmployee;
     }
 
@@ -193,8 +299,16 @@ public class Reservation implements Serializable{
         return assignedTable;
     }
 
-    public void setAssignedTable(Restaurant.Table assignedTable) {
-        this.assignedTable = assignedTable;
+    public LocalDateTime getEndTime() {
+        return endTime;
+    }
+
+    public boolean isActive(){
+        return active;
+    }
+
+    public String getShortInfo(){
+        return getGuestName() + ", at " + getDateTimeOfReservation() + " at Table number: " + getAssignedTable().getTableNumber() + ". Employee -> " + getAssignedEmployee().getName() + " " + getAssignedEmployee().getSurname();
     }
 
     @Override
@@ -205,16 +319,5 @@ public class Reservation implements Serializable{
                 + ", dateTimeOfReservation=" + dateTimeOfReservation 
                 + ", assignedEmployee=" + assignedEmployee.getName()
                 + ", assignedTable=" + assignedTable.getTableNumber() + "]";
-    }
-
-    public static void readExtent(ObjectInputStream stream) throws IOException, ClassNotFoundException{
-        Object object = stream.readObject();
-        if (object instanceof List<?>) {
-            extent = new ArrayList<>((List<Reservation>) object);
-        }else throw new IOException("Unable to read from extent");
-    }
-
-    public static void writeExtent(ObjectOutputStream stream) throws IOException{
-        stream.writeObject(extent);
     }
 }
